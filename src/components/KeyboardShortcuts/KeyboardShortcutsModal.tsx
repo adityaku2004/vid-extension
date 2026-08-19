@@ -44,6 +44,14 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
       { key: 'O', desc: 'Open file picker' },
       { key: '?', desc: 'Show keyboard shortcuts' },
       { key: 'Esc', desc: 'Exit fullscreen / Close panels' },
+    ]},
+    { group: 'Touch & Mouse Gestures', items: [
+      { key: 'Double-click Left', desc: `Seek backward ${skipSeconds}s` },
+      { key: 'Double-click Right', desc: `Seek forward ${skipSeconds}s` },
+      { key: 'Swipe Up/Down Right', desc: 'Slide to adjust volume' },
+      { key: 'Double-click Center', desc: 'Toggle fullscreen mode' },
+      { key: 'Single click/tap', desc: 'Play / Pause video' },
+      { key: 'Drag & Drop', desc: 'Drop video or subtitle files' },
     ]}
   ];
 

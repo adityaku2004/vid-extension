@@ -261,11 +261,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         controlsVisible={controlsVisible}
       />
 
-      {/* 3. Interactive Gesture Overlay (Seek ripples, click play/pause, drag/drop) */}
+      {/* 3. Interactive Gesture Overlay (Seek ripples, click play/pause, volume swipe, drag/drop) */}
       <GestureOverlay
         isPlaying={isPlaying}
+        volume={volume}
+        isMuted={isMuted}
+        audioBoost={settings.audioBoost}
         onTogglePlay={togglePlay}
         onSeekRelative={seekRelative}
+        onVolumeChange={updateVolume}
         onToggleFullscreen={toggleFullscreen}
         onFileDrop={onAddLocalFiles}
         skipSeconds={settings.skipSeconds}
