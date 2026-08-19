@@ -1,6 +1,6 @@
 {
   "name": "VLC Extension Video Player",
-  "description": "A cinematic VLC-inspired desktop media player for browser extensions with custom controls, SRT/VTT subtitles, playlists, and keyboard shortcuts.",
+  "description": "A cinematic VLC-inspired desktop media player for browser extensions with custom controls, MKV container and embedded subtitle track support, SRT/VTT/ASS subtitles, playlists, and keyboard shortcuts.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

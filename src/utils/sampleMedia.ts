@@ -158,5 +158,65 @@ export const SAMPLE_VIDEOS: PlaylistItem[] = [
       }
     ],
     selectedSubtitleTrackId: 'sub-en-elephants'
+  },
+  {
+    id: 'sample-cosmos-mkv',
+    title: 'Cosmos Laundromat (Matroska MKV Feature)',
+    url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    duration: 720,
+    isSample: true,
+    dateAdded: Date.now(),
+    posterUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1200&q=80',
+    metadata: {
+      filename: 'CosmosLaundromat.FirstCycle.1080p.mkv',
+      resolution: '1920 × 1080',
+      duration: 720,
+      fileSize: 318767104,
+      videoType: 'video/x-matroska (H.264 / FLAC / Embedded Subtitles)',
+      framerate: 24,
+      codec: 'V_MPEG4/ISO/AVC (MKV Container)',
+      aspectRatio: '16:9'
+    },
+    subtitleTracks: [
+      {
+        id: 'sub-mkv-en',
+        label: 'English [MKV Embedded Track 1]',
+        language: 'en',
+        cues: [
+          { id: 1, startTime: 1, endTime: 5, text: "On a desolate, windswept island in the middle of nowhere..." },
+          { id: 2, startTime: 5.5, endTime: 10, text: "Franck the sheep is on the brink of ending it all." },
+          { id: 3, startTime: 10.5, endTime: 16, text: "Victor: Wait! Before you jump, would you like a second chance?" },
+          { id: 4, startTime: 16.5, endTime: 22, text: "Victor offers Franck a mystical timer that resets reality." },
+          { id: 5, startTime: 23, endTime: 30, text: "Enter the cosmic laundromat of infinite dimensions." }
+        ],
+        isCustom: false
+      },
+      {
+        id: 'sub-mkv-jp',
+        label: '日本語 Japanese [MKV Embedded Track 2 - ASS]',
+        language: 'ja',
+        cues: [
+          { id: 1, startTime: 1, endTime: 5, text: "【日本語】荒涼とした孤島で、一頭の羊が佇んでいた..." },
+          { id: 2, startTime: 5.5, endTime: 10, text: "フランクは全てを諦めようとしていた。" },
+          { id: 3, startTime: 10.5, endTime: 16, text: "ビクター：待て！飛び降りる前に、もう一度チャンスを試さないか？" },
+          { id: 4, startTime: 16.5, endTime: 22, text: "現実をリセットする神秘のタイマーが手渡される。" },
+          { id: 5, startTime: 23, endTime: 30, text: "無限の次元へと繋がる宇宙のコインランドリーへようこそ。" }
+        ],
+        isCustom: false
+      },
+      {
+        id: 'sub-mkv-es',
+        label: 'Español [MKV Embedded Track 3]',
+        language: 'es',
+        cues: [
+          { id: 1, startTime: 1, endTime: 5, text: "En una isla desolada y azotada por el viento..." },
+          { id: 2, startTime: 5.5, endTime: 10, text: "Franck la oveja está al borde del abismo." },
+          { id: 3, startTime: 10.5, endTime: 16, text: "Víctor: ¡Espera! ¿Te gustaría una segunda oportunidad?" },
+          { id: 4, startTime: 16.5, endTime: 22, text: "Víctor le ofrece un cronómetro cósmico que reinicia la realidad." }
+        ],
+        isCustom: false
+      }
+    ],
+    selectedSubtitleTrackId: 'sub-mkv-en'
   }
 ];

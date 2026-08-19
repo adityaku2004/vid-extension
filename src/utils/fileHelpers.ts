@@ -22,7 +22,7 @@ export function cleanTitleFromFilename(filename: string): string {
  * Checks if a file is a supported video type
  */
 export function isVideoFile(file: File): boolean {
-  if (file.type && file.type.startsWith('video/')) return true;
+  if (file.type && (file.type.startsWith('video/') || file.type.includes('matroska') || file.type.includes('mkv'))) return true;
   const ext = file.name.split('.').pop()?.toLowerCase();
   return ['mp4', 'mkv', 'webm', 'mov', 'm4v', 'ogv', 'avi'].includes(ext || '');
 }
@@ -32,7 +32,7 @@ export function isVideoFile(file: File): boolean {
  */
 export function isSubtitleFile(file: File): boolean {
   const ext = file.name.split('.').pop()?.toLowerCase();
-  return ['srt', 'vtt', 'sub', 'sbv'].includes(ext || '');
+  return ['srt', 'vtt', 'ass', 'ssa', 'sub', 'sbv'].includes(ext || '');
 }
 
 /**

@@ -156,12 +156,12 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
               className="px-5 py-3.5 rounded-2xl bg-white/10 hover:bg-white/15 text-gray-200 hover:text-white font-semibold text-sm transition-all border border-white/10 flex items-center gap-2 active:scale-95"
             >
               <Subtitles className="w-4 h-4 text-cyan-400" />
-              <span>Load Subtitles (.srt / .vtt)</span>
+              <span>Load Subtitles (.srt / .vtt / .ass)</span>
             </button>
             <input
               ref={subtitleInputRef}
               type="file"
-              accept=".srt,.vtt,.sub"
+              accept=".srt,.vtt,.ass,.ssa,.sub,.sbv"
               onChange={handleFileInputChange}
               className="hidden"
             />
@@ -170,10 +170,10 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           {/* Format Badges */}
           <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-gray-400">
             <span className="text-gray-500 font-medium">Supported Formats:</span>
-            {['MP4 (H.264 / AV1)', 'WebM (VP9)', 'MKV', 'MOV', 'M4V', 'OGV'].map((fmt) => (
+            {['MKV (Matroska)', 'MP4 (H.264 / AV1)', 'WebM (VP9)', 'MOV', 'M4V', 'Embedded Subs (SRT/ASS)'].map((fmt) => (
               <span
                 key={fmt}
-                className="px-2.5 py-0.5 rounded-lg bg-black/40 border border-white/5 font-mono-time text-[11px] text-gray-300"
+                className="px-2.5 py-0.5 rounded-lg bg-black/40 border border-white/5 font-mono-time text-[11px] text-cyan-300"
               >
                 {fmt}
               </span>

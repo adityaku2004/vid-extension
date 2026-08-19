@@ -9,6 +9,8 @@ import {
 import { SAMPLE_VIDEOS } from './utils/sampleMedia';
 import { parseSRT } from './utils/srtParser';
 import { parseVTT } from './utils/vttParser';
+import { parseASS } from './utils/assParser';
+import { extractMkvSubtitles, isMkvContainer } from './utils/mkvSubtitleParser';
 import { cleanTitleFromFilename, generateId, isVideoFile, isSubtitleFile } from './utils/fileHelpers';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { EmptyState } from './components/EmptyState/EmptyState';
@@ -85,7 +87,7 @@ export default function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  // Process Local Files (Supports dropping videos and subtitle files together)
+  // Process Local Files (Supports dropping videos and subtitle files together, including MKV files with embedded subtitles)
   const handleOpenLocalFiles = useCallback(
     async (files: FileList) => {
       const videoFiles: File[] = [];
@@ -100,14 +102,21 @@ export default function App() {
         }
       }
 
-      // Parse any dropped subtitles
+      // Parse any dropped external subtitles (.srt, .vtt, .ass, .ssa, .sub)
       const parsedSubs: SubtitleTrack[] = [];
       for (const subFile of subFiles) {
         try {
           const text = await subFile.text();
-          const cues = subFile.name.endsWith('.srt') || subFile.name.endsWith('.sub')
-            ? parseSRT(text)
-            : parseVTT(text);
+          const nameLower = subFile.name.toLowerCase();
+          let cues = [];
+
+          if (nameLower.endsWith('.ass') || nameLower.endsWith('.ssa')) {
+            cues = parseASS(text);
+          } else if (nameLower.endsWith('.srt') || nameLower.endsWith('.sub') || nameLower.endsWith('.sbv')) {
+            cues = parseSRT(text);
+          } else {
+            cues = parseVTT(text);
+          }
 
           if (cues.length > 0) {
             parsedSubs.push({
@@ -124,9 +133,26 @@ export default function App() {
       }
 
       if (videoFiles.length > 0) {
-        const newItems: PlaylistItem[] = videoFiles.map((file) => {
+        let totalEmbeddedSubsFound = 0;
+        const newItems: PlaylistItem[] = [];
+
+        for (const file of videoFiles) {
           const objectUrl = URL.createObjectURL(file);
-          return {
+          const isMkv = await isMkvContainer(file);
+          let embeddedSubs: SubtitleTrack[] = [];
+
+          if (isMkv) {
+            try {
+              embeddedSubs = await extractMkvSubtitles(file);
+              totalEmbeddedSubsFound += embeddedSubs.length;
+            } catch (e) {
+              console.warn('Error extracting MKV embedded subtitles:', e);
+            }
+          }
+
+          const combinedSubs = [...embeddedSubs, ...parsedSubs];
+
+          newItems.push({
             id: generateId(),
             title: cleanTitleFromFilename(file.name),
             url: objectUrl,
@@ -135,16 +161,26 @@ export default function App() {
             metadata: {
               filename: file.name,
               fileSize: file.size,
-              videoType: file.type || 'video/mp4'
+              videoType: isMkv ? 'video/x-matroska (MKV Container)' : (file.type || 'video/mp4')
             },
-            subtitleTracks: [...parsedSubs],
-            selectedSubtitleTrackId: parsedSubs.length > 0 ? parsedSubs[0].id : null
-          };
-        });
+            subtitleTracks: combinedSubs,
+            selectedSubtitleTrackId: combinedSubs.length > 0 ? combinedSubs[0].id : null
+          });
+        }
 
         setPlaylist((prev) => [...newItems, ...prev]);
         setCurrentVideo(newItems[0]);
-        showToast(`Loaded ${newItems.length} video${newItems.length > 1 ? 's' : ''}`);
+
+        if (totalEmbeddedSubsFound > 0) {
+          setSubtitleSettings((prev) => ({ ...prev, enabled: true }));
+          showToast(
+            `Loaded MKV video with ${totalEmbeddedSubsFound} embedded subtitle track${
+              totalEmbeddedSubsFound > 1 ? 's' : ''
+            }`
+          );
+        } else {
+          showToast(`Loaded ${newItems.length} video${newItems.length > 1 ? 's' : ''}`);
+        }
       } else if (parsedSubs.length > 0 && currentVideo) {
         // If only subtitle file was dropped while video is playing, attach to current video
         const updatedVideo = {

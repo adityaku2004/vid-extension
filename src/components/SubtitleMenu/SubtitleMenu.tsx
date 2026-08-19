@@ -13,6 +13,7 @@ import {
 import { SubtitleTrack, SubtitleSettings, SubtitleSize, SubtitlePosition, SubtitleFont } from '../../types';
 import { parseSRT } from '../../utils/srtParser';
 import { parseVTT } from '../../utils/vttParser';
+import { parseASS } from '../../utils/assParser';
 import { generateId } from '../../utils/fileHelpers';
 
 interface SubtitleMenuProps {
@@ -67,8 +68,11 @@ export const SubtitleMenu: React.FC<SubtitleMenuProps> = ({
 
     try {
       const text = await file.text();
+      const nameLower = file.name.toLowerCase();
       let cues = [];
-      if (file.name.endsWith('.srt') || file.name.endsWith('.sub')) {
+      if (nameLower.endsWith('.ass') || nameLower.endsWith('.ssa')) {
+        cues = parseASS(text);
+      } else if (nameLower.endsWith('.srt') || nameLower.endsWith('.sub') || nameLower.endsWith('.sbv')) {
         cues = parseSRT(text);
       } else {
         cues = parseVTT(text);
@@ -132,12 +136,12 @@ export const SubtitleMenu: React.FC<SubtitleMenuProps> = ({
             className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-normal capitalize"
           >
             <Upload className="w-3 h-3" />
-            <span>Load File (.srt / .vtt)</span>
+            <span>Load File (.srt / .vtt / .ass)</span>
           </button>
           <input
             ref={fileInputRef}
             type="file"
-            accept=".srt,.vtt,.sub"
+            accept=".srt,.vtt,.ass,.ssa,.sub,.sbv"
             onChange={handleFileUpload}
             className="hidden"
           />
