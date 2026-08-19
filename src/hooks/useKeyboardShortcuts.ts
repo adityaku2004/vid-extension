@@ -9,6 +9,7 @@ interface KeyboardShortcutHandlers {
   onTogglePip: () => void;
   onToggleSubtitles: () => void;
   onCyclePlaybackSpeed: () => void;
+  skipSeconds?: number;
   onNextVideo?: () => void;
   onPrevVideo?: () => void;
   onCycleAspectRatio?: () => void;
@@ -40,6 +41,8 @@ export function useKeyboardShortcuts(
         return;
       }
 
+      const step = handlers.skipSeconds ?? 10;
+
       switch (e.key) {
         case ' ':
         case 'k':
@@ -55,7 +58,7 @@ export function useKeyboardShortcuts(
           } else if (e.ctrlKey || e.metaKey) {
             handlers.onSeek(-60);
           } else {
-            handlers.onSeek(-5);
+            handlers.onSeek(-step);
           }
           break;
 
@@ -66,7 +69,7 @@ export function useKeyboardShortcuts(
           } else if (e.ctrlKey || e.metaKey) {
             handlers.onSeek(60);
           } else {
-            handlers.onSeek(5);
+            handlers.onSeek(step);
           }
           break;
 

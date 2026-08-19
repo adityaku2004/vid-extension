@@ -7,7 +7,11 @@ import {
   ShieldCheck,
   Zap,
   RotateCcw,
-  Check
+  RotateCw,
+  FastForward,
+  Check,
+  Minus,
+  Plus
 } from 'lucide-react';
 import { Modal } from '../Common/Modal';
 import { PlayerSettings, SubtitleSettings, SubtitleSize, SubtitlePosition, SubtitleFont, AspectRatioMode } from '../../types';
@@ -142,27 +146,106 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </select>
           </div>
 
-          {/* Skip Duration */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-            <div>
-              <div className="font-semibold text-white">Skip Seek Step</div>
-              <div className="text-gray-400 text-[11px]">Seconds to forward or rewind with arrow keys</div>
+          {/* Arrow Keys Fast Forward / Rewind Seek Duration */}
+          <div className="p-3.5 rounded-xl bg-white/5 border border-white/5 space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <div className="font-semibold text-white flex items-center gap-1.5">
+                  <FastForward className="w-4 h-4 text-cyan-400" />
+                  <span>Arrow Keys Fast Forward / Rewind</span>
+                </div>
+                <div className="text-gray-400 text-[11px] mt-0.5">
+                  Seconds to skip forward (→) or rewind (←) when pressing arrow keys
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-mono-time text-xs font-bold whitespace-nowrap">
+                <span>← {playerSettings.skipSeconds}s</span>
+                <span className="text-cyan-500/40">|</span>
+                <span>+{playerSettings.skipSeconds}s →</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              {[5, 10, 15, 30].map((secs) => (
-                <button
-                  key={secs}
-                  type="button"
-                  onClick={() => onUpdatePlayerSettings({ skipSeconds: secs })}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-mono-time transition-colors ${
-                    playerSettings.skipSeconds === secs
-                      ? 'bg-cyan-500 text-black font-bold'
-                      : 'bg-white/10 text-gray-300 hover:text-white'
-                  }`}
-                >
-                  {secs}s
-                </button>
-              ))}
+
+            {/* Quick Preset Buttons */}
+            <div className="space-y-1.5">
+              <div className="text-gray-400 text-[10px] uppercase font-semibold tracking-wider">
+                Quick Presets
+              </div>
+              <div className="grid grid-cols-7 gap-1.5">
+                {[1, 3, 5, 10, 15, 30, 60].map((secs) => (
+                  <button
+                    key={secs}
+                    type="button"
+                    onClick={() => onUpdatePlayerSettings({ skipSeconds: secs })}
+                    className={`py-1.5 rounded-lg text-xs font-mono-time font-bold transition-all text-center ${
+                      playerSettings.skipSeconds === secs
+                        ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/25 scale-[1.02]'
+                        : 'bg-white/10 text-gray-300 hover:text-white hover:bg-white/15'
+                    }`}
+                  >
+                    {secs}s
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Slider & Stepper */}
+            <div className="space-y-1.5 pt-1 border-t border-white/5">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-gray-400">Custom Duration</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onUpdatePlayerSettings({
+                        skipSeconds: Math.max(1, (playerSettings.skipSeconds || 10) - 1)
+                      })
+                    }
+                    className="p-1 rounded bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white transition-colors"
+                    title="Decrease 1s"
+                  >
+                    <Minus className="w-3 h-3" />
+                  </button>
+                  <div className="flex items-center">
+                    <input
+                      type="number"
+                      min={1}
+                      max={120}
+                      value={playerSettings.skipSeconds || 10}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (!isNaN(val) && val >= 1 && val <= 120) {
+                          onUpdatePlayerSettings({ skipSeconds: val });
+                        }
+                      }}
+                      className="w-12 bg-black/60 border border-white/15 text-center text-cyan-300 font-mono-time font-bold rounded px-1 py-0.5 text-xs focus:outline-none focus:border-cyan-500"
+                    />
+                    <span className="text-gray-400 ml-1 text-xs">sec</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onUpdatePlayerSettings({
+                        skipSeconds: Math.min(120, (playerSettings.skipSeconds || 10) + 1)
+                      })
+                    }
+                    className="p-1 rounded bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white transition-colors"
+                    title="Increase 1s"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={60}
+                step={1}
+                value={Math.min(60, playerSettings.skipSeconds || 10)}
+                onChange={(e) =>
+                  onUpdatePlayerSettings({ skipSeconds: parseInt(e.target.value, 10) })
+                }
+                className="w-full h-1.5 rounded-lg appearance-none bg-white/20 accent-cyan-400 cursor-pointer"
+              />
             </div>
           </div>
 
@@ -427,9 +510,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto pr-1">
             {[
               { key: 'Space / K', desc: 'Play / Pause video' },
-              { key: '← / →', desc: 'Seek 5s (Rewind / Forward)' },
-              { key: 'Shift + ← / →', desc: 'Seek 30s' },
-              { key: 'Ctrl + ← / →', desc: 'Seek 60s' },
+              {
+                key: '← / →',
+                desc: `Seek ${playerSettings.skipSeconds || 10}s (Rewind / Forward)`
+              },
+              { key: 'Shift + ← / →', desc: 'Seek 30s (Medium jump)' },
+              { key: 'Ctrl + ← / →', desc: 'Seek 60s (Long jump)' },
+              { key: 'J / L', desc: 'Seek 10s (Standard step)' },
               { key: '↑ / ↓', desc: 'Volume Up / Down 5%' },
               { key: 'M', desc: 'Toggle Mute' },
               { key: 'F', desc: 'Toggle Fullscreen' },

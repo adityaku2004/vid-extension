@@ -344,6 +344,7 @@ export default function App() {
       <KeyboardShortcutsModal
         isOpen={isShortcutsOpen}
         onClose={() => setIsShortcutsOpen(false)}
+        skipSeconds={playerSettings.skipSeconds}
       />
 
       {/* Audio Equalizer & Boost Modal */}

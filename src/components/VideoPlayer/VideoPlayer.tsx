@@ -167,6 +167,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   useKeyboardShortcuts({
     onTogglePlay: togglePlay,
     onSeek: (secs) => seekRelative(secs),
+    skipSeconds: settings.skipSeconds,
     onChangeVolume: (delta) => updateVolume(volume + delta),
     onToggleMute: () => updateVolume(volume, !isMuted),
     onToggleFullscreen: toggleFullscreen,
