@@ -4,7 +4,8 @@ import {
   PlayerSettings,
   SubtitleSettings,
   SubtitleTrack,
-  ToastMessage
+  ToastMessage,
+  VideoBookmark
 } from './types';
 import { SAMPLE_VIDEOS } from './utils/sampleMedia';
 import { parseSRT } from './utils/srtParser';
@@ -12,6 +13,7 @@ import { parseVTT } from './utils/vttParser';
 import { parseASS } from './utils/assParser';
 import { extractMkvSubtitles, isMkvContainer } from './utils/mkvSubtitleParser';
 import { cleanTitleFromFilename, generateId, isVideoFile, isSubtitleFile } from './utils/fileHelpers';
+import { extensionStorage } from './utils/extensionStorage';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { EmptyState } from './components/EmptyState/EmptyState';
 import { VideoPlayer } from './components/VideoPlayer/VideoPlayer';
@@ -50,6 +52,11 @@ const DEFAULT_SUBTITLE_SETTINGS: SubtitleSettings = {
   syncOffset: 0
 };
 
+// Gather initial bookmarks from sample videos
+const INITIAL_BOOKMARKS: VideoBookmark[] = SAMPLE_VIDEOS.flatMap(
+  (video) => video.bookmarks || []
+);
+
 export default function App() {
   // Persistence for settings & playlist
   const [playerSettings, setPlayerSettings] = useLocalStorage<PlayerSettings>(
@@ -66,8 +73,15 @@ export default function App() {
   const [playlist, setPlaylist] = useState<PlaylistItem[]>(SAMPLE_VIDEOS);
   const [currentVideo, setCurrentVideo] = useState<PlaylistItem | null>(null);
 
+  // Bookmarks State & Persistence
+  const [bookmarks, setBookmarks] = useLocalStorage<VideoBookmark[]>(
+    'vlc_video_bookmarks_list',
+    INITIAL_BOOKMARKS
+  );
+
   // Modals & Panels State
   const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
+  const [playlistTab, setPlaylistTab] = useState<'playlist' | 'bookmarks'>('playlist');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isEqualizerOpen, setIsEqualizerOpen] = useState(false);
@@ -85,6 +99,73 @@ export default function App() {
 
   const dismissToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  // Bookmark Management Handlers
+  const handleAddBookmark = useCallback(
+    (label?: string, color?: string, time?: number) => {
+      if (!currentVideo) return;
+      const targetTime = time !== undefined ? Math.max(0, time) : 0;
+      const newBm: VideoBookmark = {
+        id: generateId(),
+        videoId: currentVideo.id,
+        videoTitle: currentVideo.title,
+        timestamp: targetTime,
+        label: label || `Bookmark at ${Math.floor(targetTime)}s`,
+        createdAt: Date.now(),
+        color: color || '#00F0FF'
+      };
+
+      setBookmarks((prev) => {
+        // Prevent duplicate timestamp bookmark within 1 second
+        const filtered = prev.filter(
+          (b) => !(b.videoId === currentVideo.id && Math.abs(b.timestamp - targetTime) < 0.8)
+        );
+        const updated = [...filtered, newBm];
+        // Also sync to extensionStorage
+        extensionStorage.saveBookmarks(currentVideo.id, updated.filter((b) => b.videoId === currentVideo.id));
+        return updated;
+      });
+      showToast(`Saved bookmark: "${newBm.label}"`);
+    },
+    [currentVideo, setBookmarks, showToast]
+  );
+
+  const handleUpdateBookmark = useCallback(
+    (id: string, newLabel: string, newColor?: string) => {
+      setBookmarks((prev) =>
+        prev.map((bm) =>
+          bm.id === id ? { ...bm, label: newLabel, color: newColor || bm.color } : bm
+        )
+      );
+      showToast('Bookmark updated');
+    },
+    [setBookmarks, showToast]
+  );
+
+  const handleDeleteBookmark = useCallback(
+    (id: string) => {
+      setBookmarks((prev) => prev.filter((bm) => bm.id !== id));
+    },
+    [setBookmarks]
+  );
+
+  const handleClearBookmarks = useCallback(
+    (videoId: string) => {
+      setBookmarks((prev) => prev.filter((bm) => bm.videoId !== videoId));
+      extensionStorage.saveBookmarks(videoId, []);
+    },
+    [setBookmarks]
+  );
+
+  const handleOpenBookmarksPanel = useCallback(() => {
+    setPlaylistTab('bookmarks');
+    setIsPlaylistOpen(true);
+  }, []);
+
+  const handleOpenPlaylistPanel = useCallback(() => {
+    setPlaylistTab('playlist');
+    setIsPlaylistOpen(true);
   }, []);
 
   // Process Local Files (Supports dropping videos and subtitle files together, including MKV files with embedded subtitles)
@@ -317,6 +398,7 @@ export default function App() {
           playlist={playlist}
           settings={playerSettings}
           subtitleSettings={subtitleSettings}
+          bookmarks={bookmarks}
           onBackToLibrary={() => setCurrentVideo(null)}
           onSelectVideo={handleSelectVideo}
           onNextVideo={handleNextVideo}
@@ -331,7 +413,15 @@ export default function App() {
           onUpdatePlayerSettings={(newPlayerSettings) =>
             setPlayerSettings((prev) => ({ ...prev, ...newPlayerSettings }))
           }
-          onTogglePlaylist={() => setIsPlaylistOpen(!isPlaylistOpen)}
+          onTogglePlaylist={handleOpenPlaylistPanel}
+          onToggleBookmarks={handleOpenBookmarksPanel}
+          onAddBookmark={handleAddBookmark}
+          onSelectBookmark={(bm) => {
+            if (currentVideo && bm.videoId !== currentVideo.id) {
+              const target = playlist.find((v) => v.id === bm.videoId);
+              if (target) setCurrentVideo(target);
+            }
+          }}
           onToggleSettings={() => setIsSettingsOpen(!isSettingsOpen)}
           onToggleEqualizer={() => setIsEqualizerOpen(!isEqualizerOpen)}
           onToggleShortcuts={() => setIsShortcutsOpen(!isShortcutsOpen)}
@@ -339,12 +429,14 @@ export default function App() {
         />
       )}
 
-      {/* Slide-in Playlist Panel */}
+      {/* Slide-in Playlist & Bookmarks Panel */}
       <PlaylistPanel
         isOpen={isPlaylistOpen}
         onClose={() => setIsPlaylistOpen(false)}
         playlist={playlist}
         currentVideoId={currentVideo?.id}
+        bookmarks={bookmarks}
+        initialTab={playlistTab}
         onSelectVideo={(video) => {
           handleSelectVideo(video);
           setIsPlaylistOpen(false);
@@ -355,6 +447,11 @@ export default function App() {
         onAddLocalFiles={handleOpenLocalFiles}
         onAddSampleVideos={handleAddSampleVideos}
         onClearPlaylist={handleClearPlaylist}
+        onAddBookmark={handleAddBookmark}
+        onUpdateBookmark={handleUpdateBookmark}
+        onDeleteBookmark={handleDeleteBookmark}
+        onClearBookmarks={handleClearBookmarks}
+        onShowToast={showToast}
       />
 
       {/* Settings Modal */}

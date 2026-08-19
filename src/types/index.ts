@@ -41,6 +41,16 @@ export interface VideoMetadata {
   aspectRatio?: string;
 }
 
+export interface VideoBookmark {
+  id: string;
+  videoId: string;
+  videoTitle?: string;
+  timestamp: number; // in seconds
+  label: string;
+  createdAt: number;
+  color?: string; // accent color e.g. '#00F0FF', '#FFD700', '#FF5252', '#69F0AE'
+}
+
 export interface PlaylistItem {
   id: string;
   title: string;
@@ -51,6 +61,7 @@ export interface PlaylistItem {
   subtitleTracks: SubtitleTrack[];
   selectedSubtitleTrackId?: string | null;
   lastPosition?: number;
+  bookmarks?: VideoBookmark[];
   dateAdded: number;
   posterUrl?: string;
   isSample?: boolean;

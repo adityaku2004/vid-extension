@@ -13,9 +13,11 @@ import {
   Gauge,
   Settings,
   Repeat,
-  Sparkles
+  Sparkles,
+  Bookmark,
+  BookmarkPlus
 } from 'lucide-react';
-import { PlaylistItem, PlayerSettings, SubtitleSettings, AspectRatioMode } from '../../types';
+import { PlaylistItem, PlayerSettings, SubtitleSettings, AspectRatioMode, VideoBookmark } from '../../types';
 import { formatTime, formatRemainingTime } from '../../utils/formatTime';
 import { Timeline } from '../Timeline/Timeline';
 import { VolumeControl } from '../VolumeControl/VolumeControl';
@@ -36,6 +38,7 @@ interface PlayerControlsProps {
   isPip: boolean;
   settings: PlayerSettings;
   subtitleSettings: SubtitleSettings;
+  bookmarks?: VideoBookmark[];
   onTogglePlay: () => void;
   onSeek: (time: number) => void;
   onSeekRelative: (seconds: number) => void;
@@ -51,6 +54,9 @@ interface PlayerControlsProps {
   onUpdateSubtitleSettings: (settings: Partial<SubtitleSettings>) => void;
   onUpdatePlayerSettings: (settings: Partial<PlayerSettings>) => void;
   onToggleSettings: () => void;
+  onToggleBookmarks?: () => void;
+  onQuickAddBookmark?: () => void;
+  onSelectBookmark?: (bookmark: VideoBookmark) => void;
 }
 
 export const PlayerControls: React.FC<PlayerControlsProps> = ({
@@ -66,6 +72,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   isPip,
   settings,
   subtitleSettings,
+  bookmarks = [],
   onTogglePlay,
   onSeek,
   onSeekRelative,
@@ -80,7 +87,10 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   onAddCustomSubtitleTrack,
   onUpdateSubtitleSettings,
   onUpdatePlayerSettings,
-  onToggleSettings
+  onToggleSettings,
+  onToggleBookmarks,
+  onQuickAddBookmark,
+  onSelectBookmark
 }) => {
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [showSubMenu, setShowSubMenu] = useState(false);
@@ -90,6 +100,8 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   const formattedDuration = showRemainingTime
     ? formatRemainingTime(currentTime, duration)
     : formatTime(duration, duration >= 3600);
+
+  const currentVideoBookmarks = bookmarks.filter((bm) => currentVideo && bm.videoId === currentVideo.id);
 
   return (
     <div className="absolute bottom-0 left-0 right-0 z-40 px-4 md:px-6 pb-4 pt-8 bg-gradient-to-t from-black/95 via-black/70 to-transparent pointer-events-auto transition-opacity duration-200 flex flex-col gap-2">
@@ -101,6 +113,8 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
           bufferedPercent={bufferedPercent}
           onSeek={onSeek}
           accentColor={settings.themeAccent || '#00F0FF'}
+          bookmarks={currentVideoBookmarks}
+          onSelectBookmark={onSelectBookmark}
         />
       </div>
 
@@ -207,8 +221,25 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
           </div>
         </div>
 
-        {/* Right Side: Speed, Subtitles, PiP, Fullscreen, Settings */}
+        {/* Right Side: Speed, Subtitles, Bookmarks, PiP, Fullscreen, Settings */}
         <div className="flex items-center gap-1 sm:gap-2">
+          {/* Bookmark Button */}
+          <Tooltip content="Add Bookmark / Open Bookmarks (B)" shortcut="B">
+            <button
+              type="button"
+              onClick={onToggleBookmarks || onQuickAddBookmark}
+              aria-label="Bookmarks panel"
+              className="relative p-2 rounded-xl text-gray-300 hover:text-cyan-400 hover:bg-white/10 transition-colors flex items-center gap-1"
+            >
+              <Bookmark className="w-4 h-4" />
+              {currentVideoBookmarks.length > 0 && (
+                <span className="text-[10px] font-bold font-mono-time text-cyan-400">
+                  {currentVideoBookmarks.length}
+                </span>
+              )}
+            </button>
+          </Tooltip>
+
           {/* Loop toggle */}
           <Tooltip content={settings.loop ? 'Loop Enabled' : 'Loop Disabled'} shortcut="L">
             <button

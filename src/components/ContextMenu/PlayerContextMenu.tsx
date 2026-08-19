@@ -13,7 +13,9 @@ import {
   Ratio,
   Info,
   Settings,
-  Zap
+  Zap,
+  Bookmark,
+  BookmarkPlus
 } from 'lucide-react';
 import { AspectRatioMode } from '../../types';
 
@@ -42,6 +44,8 @@ interface PlayerContextMenuProps {
   onToggleAudioBoost: () => void;
   onOpenSettings: () => void;
   onShowStats: () => void;
+  onAddBookmark?: () => void;
+  onOpenBookmarks?: () => void;
 }
 
 export const PlayerContextMenu: React.FC<PlayerContextMenuProps> = ({
@@ -63,7 +67,9 @@ export const PlayerContextMenu: React.FC<PlayerContextMenuProps> = ({
   onCycleAspectRatio,
   onToggleAudioBoost,
   onOpenSettings,
-  onShowStats
+  onShowStats,
+  onAddBookmark,
+  onOpenBookmarks
 }) => {
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -87,7 +93,7 @@ export const PlayerContextMenu: React.FC<PlayerContextMenuProps> = ({
 
   // Ensure menu doesn't overflow viewport boundaries
   const adjustedX = Math.min(position.x, window.innerWidth - 240);
-  const adjustedY = Math.min(position.y, window.innerHeight - 380);
+  const adjustedY = Math.min(position.y, window.innerHeight - 440);
 
   return (
     <div
@@ -144,6 +150,42 @@ export const PlayerContextMenu: React.FC<PlayerContextMenuProps> = ({
         </div>
         <span className="text-[10px] font-mono-time text-gray-500">→</span>
       </button>
+
+      <div className="my-1 border-t border-white/5" />
+
+      {/* Bookmarks options */}
+      {onAddBookmark && (
+        <button
+          type="button"
+          onClick={() => {
+            onAddBookmark();
+            onClose();
+          }}
+          className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-cyan-300 hover:text-white hover:bg-cyan-500/20 transition-colors"
+        >
+          <div className="flex items-center gap-2.5">
+            <BookmarkPlus className="w-4 h-4 text-cyan-400" />
+            <span className="font-semibold">Add Bookmark</span>
+          </div>
+          <span className="text-[10px] font-mono-time text-gray-400">B</span>
+        </button>
+      )}
+
+      {onOpenBookmarks && (
+        <button
+          type="button"
+          onClick={() => {
+            onOpenBookmarks();
+            onClose();
+          }}
+          className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-gray-200 hover:text-white hover:bg-white/10 transition-colors"
+        >
+          <div className="flex items-center gap-2.5">
+            <Bookmark className="w-4 h-4 text-gray-400" />
+            <span>View Bookmarks</span>
+          </div>
+        </button>
+      )}
 
       <div className="my-1 border-t border-white/5" />
 

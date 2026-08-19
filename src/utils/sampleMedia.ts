@@ -65,7 +65,12 @@ export const SAMPLE_VIDEOS: PlaylistItem[] = [
         isCustom: false
       }
     ],
-    selectedSubtitleTrackId: 'sub-en-bunny'
+    selectedSubtitleTrackId: 'sub-en-bunny',
+    bookmarks: [
+      { id: 'bm-bunny-1', videoId: 'sample-bunny', timestamp: 14, label: 'Frank squirrel plans a prank', createdAt: Date.now() - 3600000, color: '#00F0FF' },
+      { id: 'bm-bunny-2', videoId: 'sample-bunny', timestamp: 95, label: 'Bunny notices the butterflies', createdAt: Date.now() - 3500000, color: '#FFD700' },
+      { id: 'bm-bunny-3', videoId: 'sample-bunny', timestamp: 240, label: 'Forest Showdown begins', createdAt: Date.now() - 3400000, color: '#FF5252' }
+    ]
   },
   {
     id: 'sample-sintel',
@@ -94,7 +99,11 @@ export const SAMPLE_VIDEOS: PlaylistItem[] = [
         isCustom: false
       }
     ],
-    selectedSubtitleTrackId: 'sub-en-sintel'
+    selectedSubtitleTrackId: 'sub-en-sintel',
+    bookmarks: [
+      { id: 'bm-sintel-1', videoId: 'sample-sintel', timestamp: 65, label: 'Finding the baby dragon', createdAt: Date.now() - 3600000 * 2, color: '#69F0AE' },
+      { id: 'bm-sintel-2', videoId: 'sample-sintel', timestamp: 310, label: 'Dragon takes flight', createdAt: Date.now() - 3550000, color: '#00F0FF' }
+    ]
   },
   {
     id: 'sample-tears',

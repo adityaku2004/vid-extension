@@ -32,10 +32,12 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
       { key: '↑', desc: 'Increase volume 5%' },
       { key: '↓', desc: 'Decrease volume 5%' },
       { key: 'M', desc: 'Toggle mute' },
-      { key: 'B', desc: 'Toggle Audio Boost (200%)' },
       { key: 'C', desc: 'Toggle subtitles / CC' },
+      { key: 'Shift + B', desc: 'Toggle Audio Boost (200%)' },
     ]},
-    { group: 'Screen & Interface', items: [
+    { group: 'Bookmarks & Navigation', items: [
+      { key: 'B', desc: 'Save Bookmark at current timestamp' },
+      { key: 'Shift + M', desc: 'Open Bookmarks panel' },
       { key: 'F', desc: 'Toggle Fullscreen' },
       { key: 'P', desc: 'Toggle Picture-in-Picture' },
       { key: 'A', desc: 'Cycle aspect ratio' },

@@ -1,5 +1,6 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { TimeTooltip } from './TimeTooltip';
+import { VideoBookmark } from '../../types';
 
 interface TimelineProps {
   currentTime: number;
@@ -7,6 +8,8 @@ interface TimelineProps {
   bufferedPercent: number;
   onSeek: (time: number) => void;
   accentColor?: string;
+  bookmarks?: VideoBookmark[];
+  onSelectBookmark?: (bookmark: VideoBookmark) => void;
 }
 
 export const Timeline: React.FC<TimelineProps> = ({
@@ -14,7 +17,9 @@ export const Timeline: React.FC<TimelineProps> = ({
   duration,
   bufferedPercent,
   onSeek,
-  accentColor = '#00F0FF'
+  accentColor = '#00F0FF',
+  bookmarks = [],
+  onSelectBookmark
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isHovering, setIsHovering] = useState(false);
@@ -79,6 +84,14 @@ export const Timeline: React.FC<TimelineProps> = ({
 
   const hoverTime = (hoverPercent / 100) * duration;
 
+  // Find if hover is close to any bookmark (within ±1.8% of timeline or ±2.5s)
+  const matchedBookmark = duration > 0
+    ? bookmarks.find((bm) => {
+        const bmPercent = (bm.timestamp / duration) * 100;
+        return Math.abs(bmPercent - hoverPercent) < 2.0 || Math.abs(bm.timestamp - hoverTime) < 3.0;
+      })
+    : null;
+
   return (
     <div
       ref={containerRef}
@@ -109,37 +122,64 @@ export const Timeline: React.FC<TimelineProps> = ({
         positionX={hoverPercent}
         visible={isHovering && duration > 0}
         duration={duration}
+        matchedBookmark={matchedBookmark}
       />
 
       {/* Background Track */}
-      <div className="relative w-full h-1 group-hover:h-2 transition-all duration-150 rounded-full bg-white/20 overflow-hidden">
+      <div className="relative w-full h-1 group-hover:h-2 transition-all duration-150 rounded-full bg-white/20 overflow-visible">
         {/* Buffered Progress */}
         <div
-          className="absolute top-0 left-0 bottom-0 bg-white/30 transition-all duration-200"
+          className="absolute top-0 left-0 bottom-0 bg-white/30 transition-all duration-200 rounded-full"
           style={{ width: `${bufferedPercent}%` }}
         />
 
         {/* Hover ghost highlight */}
         {isHovering && (
           <div
-            className="absolute top-0 left-0 bottom-0 bg-white/20 transition-all duration-75 pointer-events-none"
+            className="absolute top-0 left-0 bottom-0 bg-white/20 transition-all duration-75 pointer-events-none rounded-full"
             style={{ width: `${hoverPercent}%` }}
           />
         )}
 
         {/* Played Progress Bar */}
         <div
-          className="absolute top-0 left-0 bottom-0 transition-[width] duration-75"
+          className="absolute top-0 left-0 bottom-0 transition-[width] duration-75 rounded-full"
           style={{
             width: `${currentPercent}%`,
             background: `linear-gradient(90deg, #3B82F6 0%, ${accentColor} 100%)`
           }}
         />
+
+        {/* Bookmark Visual Pins on Track */}
+        {duration > 0 &&
+          bookmarks.map((bm) => {
+            const pinPercent = Math.min(100, Math.max(0, (bm.timestamp / duration) * 100));
+            const pinColor = bm.color || '#00F0FF';
+            return (
+              <div
+                key={bm.id}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSeek(bm.timestamp);
+                  onSelectBookmark?.(bm);
+                }}
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-20 w-2.5 h-2.5 group-hover:w-3.5 group-hover:h-3.5 rounded-full transition-all duration-150 cursor-pointer hover:scale-150 flex items-center justify-center"
+                style={{
+                  left: `${pinPercent}%`,
+                  backgroundColor: pinColor,
+                  boxShadow: `0 0 8px ${pinColor}, 0 1px 3px rgba(0,0,0,0.8)`
+                }}
+                title={`Bookmark: "${bm.label}"`}
+              >
+                <span className="w-1 h-1 rounded-full bg-black/60" />
+              </div>
+            );
+          })}
       </div>
 
       {/* Scrubber Thumb */}
       <div
-        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-white shadow-lg pointer-events-none transition-transform duration-100 group-hover:scale-125"
+        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-white shadow-lg pointer-events-none transition-transform duration-100 group-hover:scale-125 z-30"
         style={{
           left: `${currentPercent}%`,
           boxShadow: `0 0 10px ${accentColor}, 0 2px 4px rgba(0,0,0,0.6)`

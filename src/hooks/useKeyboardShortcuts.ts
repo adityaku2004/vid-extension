@@ -16,6 +16,8 @@ interface KeyboardShortcutHandlers {
   onToggleBoost?: () => void;
   onOpenFilePicker?: () => void;
   onTogglePlaylist?: () => void;
+  onToggleBookmarks?: () => void;
+  onAddBookmark?: () => void;
   onToggleSettings?: () => void;
   onToggleHelp?: () => void;
   onEscape?: () => void;
@@ -97,8 +99,13 @@ export function useKeyboardShortcuts(
 
         case 'm':
         case 'M':
-          e.preventDefault();
-          handlers.onToggleMute();
+          if (e.shiftKey) {
+            e.preventDefault();
+            handlers.onToggleBookmarks?.();
+          } else {
+            e.preventDefault();
+            handlers.onToggleMute();
+          }
           break;
 
         case 'f':
@@ -145,7 +152,11 @@ export function useKeyboardShortcuts(
         case 'b':
         case 'B':
           e.preventDefault();
-          handlers.onToggleBoost?.();
+          if (e.shiftKey) {
+            handlers.onToggleBoost?.();
+          } else {
+            handlers.onAddBookmark?.();
+          }
           break;
 
         case 'o':

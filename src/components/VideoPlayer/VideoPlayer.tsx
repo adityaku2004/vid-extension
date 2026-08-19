@@ -10,7 +10,8 @@ import {
   PlayerSettings,
   SubtitleSettings,
   SubtitleTrack,
-  AspectRatioMode
+  AspectRatioMode,
+  VideoBookmark
 } from '../../types';
 import { useVideoPlayer } from '../../hooks/useVideoPlayer';
 import { useFullscreen } from '../../hooks/useFullscreen';
@@ -28,6 +29,7 @@ interface VideoPlayerProps {
   playlist: PlaylistItem[];
   settings: PlayerSettings;
   subtitleSettings: SubtitleSettings;
+  bookmarks?: VideoBookmark[];
   onBackToLibrary: () => void;
   onSelectVideo: (video: PlaylistItem) => void;
   onNextVideo: () => void;
@@ -39,6 +41,9 @@ interface VideoPlayerProps {
   onUpdateSubtitleSettings: (newSettings: Partial<SubtitleSettings>) => void;
   onUpdatePlayerSettings: (newSettings: Partial<PlayerSettings>) => void;
   onTogglePlaylist: () => void;
+  onToggleBookmarks?: () => void;
+  onAddBookmark?: (label?: string, color?: string, time?: number) => void;
+  onSelectBookmark?: (bookmark: VideoBookmark) => void;
   onToggleSettings: () => void;
   onToggleEqualizer: () => void;
   onToggleShortcuts: () => void;
@@ -50,6 +55,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   playlist,
   settings,
   subtitleSettings,
+  bookmarks = [],
   onBackToLibrary,
   onSelectVideo,
   onNextVideo,
@@ -61,6 +67,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   onUpdateSubtitleSettings,
   onUpdatePlayerSettings,
   onTogglePlaylist,
+  onToggleBookmarks,
+  onAddBookmark,
+  onSelectBookmark,
   onToggleSettings,
   onToggleEqualizer,
   onToggleShortcuts,
@@ -163,6 +172,12 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     setControlsVisible(true);
   };
 
+  const handleQuickAddBookmark = useCallback(() => {
+    if (onAddBookmark) {
+      onAddBookmark(undefined, undefined, currentTime);
+    }
+  }, [onAddBookmark, currentTime]);
+
   // Keyboard Shortcuts Hook
   useKeyboardShortcuts({
     onTogglePlay: togglePlay,
@@ -189,6 +204,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     },
     onOpenFilePicker: onBackToLibrary,
     onTogglePlaylist,
+    onToggleBookmarks,
+    onAddBookmark: handleQuickAddBookmark,
     onToggleSettings,
     onToggleHelp: onToggleShortcuts,
     onEscape: () => {
@@ -214,6 +231,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         return { objectFit: 'contain' };
     }
   };
+
+  const currentVideoBookmarks = bookmarks.filter((bm) => currentVideo && bm.videoId === currentVideo.id);
 
   return (
     <div
@@ -331,10 +350,12 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
           aspectRatio={aspectRatio}
           onBack={onBackToLibrary}
           onTogglePlaylist={onTogglePlaylist}
+          onToggleBookmarks={onToggleBookmarks}
           onToggleSettings={onToggleSettings}
           onToggleEqualizer={onToggleEqualizer}
           onCycleAspectRatio={cycleAspectRatio}
           playlistCount={playlist.length}
+          bookmarkCount={currentVideoBookmarks.length}
         />
       </div>
 
@@ -357,6 +378,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
           isPip={false}
           settings={settings}
           subtitleSettings={subtitleSettings}
+          bookmarks={bookmarks}
           onTogglePlay={togglePlay}
           onSeek={seekTo}
           onSeekRelative={seekRelative}
@@ -372,6 +394,12 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
           onUpdateSubtitleSettings={onUpdateSubtitleSettings}
           onUpdatePlayerSettings={onUpdatePlayerSettings}
           onToggleSettings={onToggleSettings}
+          onToggleBookmarks={onToggleBookmarks}
+          onQuickAddBookmark={handleQuickAddBookmark}
+          onSelectBookmark={(bm) => {
+            seekTo(bm.timestamp);
+            onSelectBookmark?.(bm);
+          }}
         />
       </div>
 
@@ -405,6 +433,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
           onShowToast(next ? 'VLC Audio Boost ON' : 'Audio Boost OFF');
         }}
         onOpenSettings={onToggleSettings}
+        onAddBookmark={handleQuickAddBookmark}
+        onOpenBookmarks={onToggleBookmarks}
         onShowStats={() => {
           onShowToast(
             `${currentVideo?.metadata?.resolution || '1080p'} • ${

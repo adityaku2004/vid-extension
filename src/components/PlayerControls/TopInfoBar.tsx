@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, ListVideo, Settings, Sliders, Ratio, Info } from 'lucide-react';
+import { ArrowLeft, ListVideo, Settings, Sliders, Ratio, Info, Bookmark } from 'lucide-react';
 import { PlaylistItem, AspectRatioMode } from '../../types';
 import { formatTime } from '../../utils/formatTime';
 import { formatFileSize } from '../../utils/fileHelpers';
@@ -11,10 +11,12 @@ interface TopInfoBarProps {
   aspectRatio: AspectRatioMode;
   onBack: () => void;
   onTogglePlaylist: () => void;
+  onToggleBookmarks?: () => void;
   onToggleSettings: () => void;
   onToggleEqualizer: () => void;
   onCycleAspectRatio: () => void;
   playlistCount: number;
+  bookmarkCount?: number;
 }
 
 export const TopInfoBar: React.FC<TopInfoBarProps> = ({
@@ -23,10 +25,12 @@ export const TopInfoBar: React.FC<TopInfoBarProps> = ({
   aspectRatio,
   onBack,
   onTogglePlaylist,
+  onToggleBookmarks,
   onToggleSettings,
   onToggleEqualizer,
   onCycleAspectRatio,
-  playlistCount
+  playlistCount,
+  bookmarkCount = 0
 }) => {
   const metadata = currentVideo?.metadata;
   const resolution = metadata?.resolution || (duration > 0 ? 'HD 1080p' : '');
@@ -78,7 +82,7 @@ export const TopInfoBar: React.FC<TopInfoBarProps> = ({
         </div>
       </div>
 
-      {/* Right side: Aspect Ratio, Equalizer, Playlist toggle, Settings */}
+      {/* Right side: Aspect Ratio, Equalizer, Bookmarks, Playlist toggle, Settings */}
       <div className="flex items-center gap-1.5 md:gap-2">
         <Tooltip content={`Aspect Ratio: ${aspectRatio.toUpperCase()}`} shortcut="A">
           <button
@@ -102,6 +106,24 @@ export const TopInfoBar: React.FC<TopInfoBarProps> = ({
             <Sliders className="w-4 h-4" />
           </button>
         </Tooltip>
+
+        {onToggleBookmarks && (
+          <Tooltip content="Video Bookmarks" shortcut="Shift+M">
+            <button
+              type="button"
+              onClick={onToggleBookmarks}
+              aria-label="Toggle Bookmarks"
+              className="relative p-2 rounded-xl bg-black/40 hover:bg-white/15 border border-white/10 text-gray-300 hover:text-cyan-400 transition-colors backdrop-blur-md"
+            >
+              <Bookmark className="w-4 h-4" />
+              {bookmarkCount > 0 && (
+                <span className="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-cyan-500 text-black">
+                  {bookmarkCount}
+                </span>
+              )}
+            </button>
+          </Tooltip>
+        )}
 
         <Tooltip content="Playlist Queue">
           <button
