@@ -7,7 +7,7 @@ const sampleSubtitlesBigBuckBunny: SubtitleCue[] = [
   { id: 4, startTime: 13.5, endTime: 18, text: "Frank the flying squirrel plans a harmless prank." },
   { id: 5, startTime: 18.5, endTime: 24, text: "Bunny admires an apple hanging from the high branch." },
   { id: 6, startTime: 25, endTime: 30, text: "The mischief begins! Prepare for the ultimate forest showdown." },
-  { id: 7, startTime: 31, endTime: 36, text: "VLC Extension Player - Crystal Clear 1080p Playback" },
+  { id: 7, startTime: 31, endTime: 36, text: "Cine Media Player - Crystal Clear 1080p Playback" },
 ];
 
 const sampleSubtitlesSintel: SubtitleCue[] = [

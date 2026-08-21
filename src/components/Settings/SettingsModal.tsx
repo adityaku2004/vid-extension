@@ -30,7 +30,7 @@ type TabType = 'player' | 'subtitles' | 'appearance' | 'shortcuts' | 'extension'
 
 const ACCENT_PRESETS = [
   { name: 'Electric Cyan', value: '#00F0FF' },
-  { name: 'VLC Blue', value: '#3B82F6' },
+  { name: 'Cine Blue', value: '#3B82F6' },
   { name: 'Cyber Purple', value: '#8B5CF6' },
   { name: 'Matrix Green', value: '#10B981' },
   { name: 'Amber Glow', value: '#F59E0B' }
@@ -253,7 +253,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
             <div>
               <div className="font-semibold text-white flex items-center gap-1.5">
-                <span>VLC Audio Boost (Up to 200%)</span>
+                <span>Cine Media Audio Boost (Up to 200%)</span>
                 <Zap className="w-3.5 h-3.5 text-cyan-400" />
               </div>
               <div className="text-gray-400 text-[11px]">

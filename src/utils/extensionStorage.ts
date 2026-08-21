@@ -83,9 +83,9 @@ export const extensionStorage = {
    */
   savePlaybackPosition: async (videoKey: string, timeInSeconds: number): Promise<void> => {
     if (!videoKey || timeInSeconds <= 0) return;
-    const positions = await extensionStorage.get<Record<string, number>>('vlc_video_positions', {});
+    const positions = await extensionStorage.get<Record<string, number>>('cine_video_positions', {});
     positions[videoKey] = Math.floor(timeInSeconds);
-    await extensionStorage.set('vlc_video_positions', positions);
+    await extensionStorage.set('cine_video_positions', positions);
   },
 
   /**
@@ -93,7 +93,7 @@ export const extensionStorage = {
    */
   getPlaybackPosition: async (videoKey: string): Promise<number | null> => {
     if (!videoKey) return null;
-    const positions = await extensionStorage.get<Record<string, number>>('vlc_video_positions', {});
+    const positions = await extensionStorage.get<Record<string, number>>('cine_video_positions', {});
     return positions[videoKey] || null;
   },
 
@@ -102,9 +102,9 @@ export const extensionStorage = {
    */
   clearPlaybackPosition: async (videoKey: string): Promise<void> => {
     if (!videoKey) return;
-    const positions = await extensionStorage.get<Record<string, number>>('vlc_video_positions', {});
+    const positions = await extensionStorage.get<Record<string, number>>('cine_video_positions', {});
     delete positions[videoKey];
-    await extensionStorage.set('vlc_video_positions', positions);
+    await extensionStorage.set('cine_video_positions', positions);
   },
 
   /**
@@ -112,9 +112,9 @@ export const extensionStorage = {
    */
   saveBookmarks: async (videoKey: string, bookmarks: any[]): Promise<void> => {
     if (!videoKey) return;
-    const allBookmarks = await extensionStorage.get<Record<string, any[]>>('vlc_video_bookmarks', {});
+    const allBookmarks = await extensionStorage.get<Record<string, any[]>>('cine_video_bookmarks', {});
     allBookmarks[videoKey] = bookmarks;
-    await extensionStorage.set('vlc_video_bookmarks', allBookmarks);
+    await extensionStorage.set('cine_video_bookmarks', allBookmarks);
   },
 
   /**
@@ -122,7 +122,7 @@ export const extensionStorage = {
    */
   getBookmarks: async (videoKey: string): Promise<any[]> => {
     if (!videoKey) return [];
-    const allBookmarks = await extensionStorage.get<Record<string, any[]>>('vlc_video_bookmarks', {});
+    const allBookmarks = await extensionStorage.get<Record<string, any[]>>('cine_video_bookmarks', {});
     return allBookmarks[videoKey] || [];
   },
 
@@ -130,6 +130,6 @@ export const extensionStorage = {
    * Retrieve all saved bookmarks across all videos
    */
   getAllBookmarks: async (): Promise<Record<string, any[]>> => {
-    return await extensionStorage.get<Record<string, any[]>>('vlc_video_bookmarks', {});
+    return await extensionStorage.get<Record<string, any[]>>('cine_video_bookmarks', {});
   }
 };

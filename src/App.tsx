@@ -61,12 +61,12 @@ const INITIAL_BOOKMARKS: VideoBookmark[] = SAMPLE_VIDEOS.flatMap(
 export default function App() {
   // Persistence for settings & playlist
   const [playerSettings, setPlayerSettings] = useLocalStorage<PlayerSettings>(
-    'vlc_player_settings',
+    'cine_player_settings',
     DEFAULT_PLAYER_SETTINGS
   );
 
   const [subtitleSettings, setSubtitleSettings] = useLocalStorage<SubtitleSettings>(
-    'vlc_subtitle_settings',
+    'cine_subtitle_settings',
     DEFAULT_SUBTITLE_SETTINGS
   );
 
@@ -79,7 +79,7 @@ export default function App() {
 
   // Bookmarks State & Persistence
   const [bookmarks, setBookmarks] = useLocalStorage<VideoBookmark[]>(
-    'vlc_video_bookmarks_list',
+    'cine_video_bookmarks_list',
     INITIAL_BOOKMARKS
   );
 
@@ -503,7 +503,7 @@ export default function App() {
         audioBoostEnabled={playerSettings.audioBoost}
         onToggleAudioBoost={(enabled) => {
           setPlayerSettings((prev) => ({ ...prev, audioBoost: enabled }));
-          showToast(enabled ? 'VLC Volume Boost ON (200%)' : 'Volume Boost OFF');
+          showToast(enabled ? 'Cine Media Volume Boost ON (200%)' : 'Volume Boost OFF');
         }}
       />
     </div>

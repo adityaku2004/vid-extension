@@ -46,7 +46,7 @@ export const AudioEqualizerModal: React.FC<AudioEqualizerModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Audio Effects & Equalizer"
-      subtitle="VLC hardware-mode audio enhancement and 10-band equalizer"
+      subtitle="Cine Media hardware-mode audio enhancement and 10-band equalizer"
       icon={<Sliders className="w-5 h-5 text-cyan-400" />}
       maxWidth="max-w-xl"
     >
@@ -58,7 +58,7 @@ export const AudioEqualizerModal: React.FC<AudioEqualizerModalProps> = ({
               <Zap className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-sm font-bold text-white">VLC Volume Boost (200%)</div>
+              <div className="text-sm font-bold text-white">Cine Media Volume Boost (200%)</div>
               <div className="text-gray-400 text-xs mt-0.5">
                 Amplifies quiet audio signals beyond standard 100% volume ceiling
               </div>

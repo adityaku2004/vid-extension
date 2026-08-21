@@ -72,7 +72,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-base font-bold tracking-wider text-white">
-                VLC MEDIA PLAYER
+                CINE MEDIA PLAYER
               </h1>
               <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 uppercase tracking-widest">
                 EXTENSION
@@ -185,12 +185,12 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           </div>
           <div className="hidden sm:flex items-center gap-2">
             <Layers className="w-4 h-4 text-cyan-400" />
-            <span>VLC Audio Boost & Multi-Track SRT</span>
+            <span>Cine Media Audio Boost & Multi-Track SRT</span>
           </div>
         </div>
 
         <div className="text-[11px] text-gray-500 font-mono-time">
-          VLC WebExtension Core • Chrome & Firefox Compatible
+          Cine Media WebExtension Core • Chrome & Firefox Compatible
         </div>
       </footer>
     </div>

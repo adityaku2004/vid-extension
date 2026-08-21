@@ -105,7 +105,7 @@ export const PlayerContextMenu: React.FC<PlayerContextMenuProps> = ({
       className="fixed z-50 w-56 p-1.5 rounded-2xl glass-panel bg-[#101114]/95 border border-white/10 shadow-2xl backdrop-blur-2xl text-xs space-y-0.5 animate-in fade-in zoom-in-95 duration-100 select-none"
     >
       <div className="px-3 py-1.5 text-[10px] font-bold text-cyan-400 uppercase tracking-wider border-b border-white/10 flex items-center justify-between">
-        <span>VLC Media Player</span>
+        <span>Cine Media Player</span>
         <span className="font-mono-time text-gray-400">v3.0-ext</span>
       </div>
 

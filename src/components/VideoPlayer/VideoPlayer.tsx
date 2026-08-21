@@ -251,7 +251,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     onToggleBoost: () => {
       const next = !settings.audioBoost;
       onUpdatePlayerSettings({ audioBoost: next });
-      onShowToast(next ? 'VLC Audio Boost ON (200%)' : 'Audio Boost OFF');
+      onShowToast(next ? 'Cine Media Audio Boost ON (200%)' : 'Audio Boost OFF');
     },
     onOpenFilePicker: onBackToLibrary,
     onTogglePlaylist,
@@ -500,7 +500,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         onToggleAudioBoost={() => {
           const next = !settings.audioBoost;
           onUpdatePlayerSettings({ audioBoost: next });
-          onShowToast(next ? 'VLC Audio Boost ON' : 'Audio Boost OFF');
+          onShowToast(next ? 'Cine Media Audio Boost ON' : 'Audio Boost OFF');
         }}
         onOpenSettings={onToggleSettings}
         onAddBookmark={handleQuickAddBookmark}

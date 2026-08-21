@@ -61,7 +61,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Keyboard Shortcuts"
-      subtitle="Complete VLC-inspired desktop media player hotkeys"
+      subtitle="Complete Cine Media desktop player hotkeys"
       icon={<Keyboard className="w-5 h-5 text-cyan-400" />}
       maxWidth="max-w-2xl"
     >
