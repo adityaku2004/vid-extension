@@ -388,12 +388,6 @@ export default function App() {
       {!currentVideo ? (
         <EmptyState
           onOpenFiles={handleOpenLocalFiles}
-          onSelectSample={(sample) => {
-            if (!playlist.some((p) => p.id === sample.id)) {
-              setPlaylist((prev) => [sample, ...prev]);
-            }
-            setCurrentVideo(sample);
-          }}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onOpenShortcuts={() => setIsShortcutsOpen(true)}
         />

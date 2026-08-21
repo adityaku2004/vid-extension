@@ -1,31 +1,25 @@
 import React, { useRef, useState } from 'react';
 import {
   Film,
-  Upload,
   FolderOpen,
-  Sparkles,
   Subtitles,
   Settings,
   Keyboard,
   Play,
-  Clock,
   Shield,
   Layers
 } from 'lucide-react';
 import { PlaylistItem } from '../../types';
-import { SAMPLE_VIDEOS } from '../../utils/sampleMedia';
-import { formatTime } from '../../utils/formatTime';
 
 interface EmptyStateProps {
   onOpenFiles: (files: FileList) => void;
-  onSelectSample: (video: PlaylistItem) => void;
+  onSelectSample?: (video: PlaylistItem) => void;
   onOpenSettings: () => void;
   onOpenShortcuts: () => void;
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({
   onOpenFiles,
-  onSelectSample,
   onOpenSettings,
   onOpenShortcuts
 }) => {
@@ -177,65 +171,6 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
               >
                 {fmt}
               </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Quick Sample Media Section for Instant Testing */}
-        <div className="mt-8">
-          <div className="flex items-center justify-between mb-4 px-1">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-cyan-400" />
-              <h3 className="text-sm font-bold uppercase tracking-wider text-gray-200">
-                Or Test Immediately with Open-Source Movies
-              </h3>
-            </div>
-            <span className="text-xs text-gray-400 font-mono-time">Full 1080p & Subtitles Included</span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-            {SAMPLE_VIDEOS.map((sample) => (
-              <div
-                key={sample.id}
-                onClick={() => onSelectSample(sample)}
-                className="group relative rounded-2xl overflow-hidden bg-[#101114] border border-white/10 hover:border-cyan-500/50 transition-all duration-200 hover:-translate-y-1 shadow-lg cursor-pointer flex flex-col"
-              >
-                <div className="aspect-video w-full relative overflow-hidden bg-black/50">
-                  <img
-                    src={sample.posterUrl}
-                    alt={sample.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-2.5">
-                    <div className="w-full flex items-center justify-between text-[11px] font-mono-time text-white font-medium">
-                      <span className="px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-md">
-                        {sample.metadata?.resolution || '1080p'}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-cyan-400" />
-                        {sample.duration ? formatTime(sample.duration) : ''}
-                      </span>
-                    </div>
-                  </div>
-                  {/* Play overlay button on hover */}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <div className="w-11 h-11 rounded-full bg-cyan-500 text-black flex items-center justify-center shadow-lg shadow-cyan-500/40 transform scale-90 group-hover:scale-100 transition-transform">
-                      <Play className="w-5 h-5 fill-black ml-0.5" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-3 flex-1 flex flex-col justify-between">
-                  <h4 className="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors line-clamp-1">
-                    {sample.title}
-                  </h4>
-                  <div className="flex items-center justify-between text-[10px] text-gray-400 font-mono-time mt-1">
-                    <span>{sample.metadata?.aspectRatio || '16:9'}</span>
-                    <span className="text-cyan-400 font-bold">SRT Subtitles</span>
-                  </div>
-                </div>
-              </div>
             ))}
           </div>
         </div>
