@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ListVideo, Bookmark, X, Plus, Trash2, Sparkles, FolderPlus } from 'lucide-react';
+import { ListVideo, Bookmark, X, Plus, Trash2, Sparkles, FolderPlus, Search } from 'lucide-react';
 import { PlaylistItem as PlaylistItemType, VideoBookmark } from '../../types';
 import { PlaylistItem } from './PlaylistItem';
 import { BookmarksList } from '../Bookmarks/BookmarksList';
@@ -53,6 +53,7 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = ({
   onShowToast
 }) => {
   const [activeTab, setActiveTab] = useState<'playlist' | 'bookmarks'>(initialTab);
+  const [searchQuery, setSearchQuery] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -62,8 +63,11 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = ({
   }, [isOpen, initialTab]);
 
   const currentVideo = playlist.find((v) => v.id === currentVideoId) || null;
-  const currentIndex = playlist.findIndex((v) => v.id === currentVideoId);
   const currentVideoBookmarks = bookmarks.filter((bm) => currentVideo && bm.videoId === currentVideo.id);
+
+  const filteredPlaylist = playlist.filter((item) =>
+    item.title.toLowerCase().includes(searchQuery.toLowerCase().trim())
+  );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -181,6 +185,47 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = ({
                   </button>
                 </div>
 
+                {/* Search Bar (visible when playlist has items) */}
+                {playlist.length > 0 && (
+                  <div className="px-3 pt-2.5 pb-1 border-b border-white/5 bg-[#121419]">
+                    <div className="relative flex items-center">
+                      <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 pointer-events-none" />
+                      <input
+                        type="text"
+                        id="playlist-search-input"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search playlist..."
+                        className="w-full pl-9 pr-8 py-2 rounded-xl bg-black/40 border border-white/10 hover:border-white/20 focus:border-cyan-500/60 focus:bg-black/60 text-xs text-white placeholder-gray-500 transition-all outline-none"
+                      />
+                      {searchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchQuery('')}
+                          className="absolute right-2.5 p-1 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                          title="Clear search"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    {searchQuery && (
+                      <div className="flex items-center justify-between mt-1.5 px-1 text-[11px] text-gray-400">
+                        <span>
+                          Found {filteredPlaylist.length} of {playlist.length} {playlist.length === 1 ? 'video' : 'videos'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setSearchQuery('')}
+                          className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
+                        >
+                          Reset
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Video List */}
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
                   {playlist.length === 0 ? (
@@ -211,20 +256,48 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = ({
                         </button>
                       </div>
                     </div>
+                  ) : filteredPlaylist.length === 0 ? (
+                    <div className="h-full min-h-[220px] flex flex-col items-center justify-center text-center p-6 bg-white/[0.02] border border-dashed border-white/10 rounded-2xl">
+                      <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mb-3">
+                        <Search className="w-6 h-6 text-gray-500" />
+                      </div>
+                      <h4 className="text-sm font-semibold text-white">No Videos Found</h4>
+                      <p className="text-xs text-gray-400 mt-1 max-w-xs leading-relaxed">
+                        No videos matching &ldquo;<span className="text-cyan-300 font-medium">{searchQuery}</span>&rdquo;
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery('')}
+                        className="mt-4 px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-medium transition-colors"
+                      >
+                        Clear Search Filter
+                      </button>
+                    </div>
                   ) : (
-                    playlist.map((item, idx) => (
-                      <PlaylistItem
-                        key={item.id}
-                        item={item}
-                        index={idx}
-                        isCurrent={item.id === currentVideoId}
-                        onPlay={() => onSelectVideo(item)}
-                        onRemove={() => onRemoveVideo(item.id)}
-                        onRename={(newTitle) => onRenameVideo(item.id, newTitle)}
-                        onMoveUp={idx > 0 ? () => onReorderPlaylist(idx, idx - 1) : undefined}
-                        onMoveDown={idx < playlist.length - 1 ? () => onReorderPlaylist(idx, idx + 1) : undefined}
-                      />
-                    ))
+                    filteredPlaylist.map((item) => {
+                      const originalIndex = playlist.findIndex((v) => v.id === item.id);
+                      return (
+                        <PlaylistItem
+                          key={item.id}
+                          item={item}
+                          index={originalIndex !== -1 ? originalIndex : 0}
+                          isCurrent={item.id === currentVideoId}
+                          onPlay={() => onSelectVideo(item)}
+                          onRemove={() => onRemoveVideo(item.id)}
+                          onRename={(newTitle) => onRenameVideo(item.id, newTitle)}
+                          onMoveUp={
+                            !searchQuery && originalIndex > 0
+                              ? () => onReorderPlaylist(originalIndex, originalIndex - 1)
+                              : undefined
+                          }
+                          onMoveDown={
+                            !searchQuery && originalIndex < playlist.length - 1
+                              ? () => onReorderPlaylist(originalIndex, originalIndex + 1)
+                              : undefined
+                          }
+                        />
+                      );
+                    })
                   )}
                 </div>
               </div>
