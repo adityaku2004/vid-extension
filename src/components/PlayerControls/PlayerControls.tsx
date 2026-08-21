@@ -222,23 +222,39 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         </div>
 
         {/* Right Side: Speed, Subtitles, Bookmarks, PiP, Fullscreen, Settings */}
-        <div className="flex items-center gap-1 sm:gap-2">
-          {/* Bookmark Button */}
-          <Tooltip content="Add Bookmark / Open Bookmarks (B)" shortcut="B">
-            <button
-              type="button"
-              onClick={onToggleBookmarks || onQuickAddBookmark}
-              aria-label="Bookmarks panel"
-              className="relative p-2 rounded-xl text-gray-300 hover:text-cyan-400 hover:bg-white/10 transition-colors flex items-center gap-1"
-            >
-              <Bookmark className="w-4 h-4" />
-              {currentVideoBookmarks.length > 0 && (
-                <span className="text-[10px] font-bold font-mono-time text-cyan-400">
-                  {currentVideoBookmarks.length}
-                </span>
-              )}
-            </button>
-          </Tooltip>
+        <div className="flex items-center gap-1 sm:gap-1.5">
+          {/* Quick Bookmark at Current Time Button */}
+          {onQuickAddBookmark && (
+            <Tooltip content={`Bookmark at current time (${formattedCurrentTime})`} shortcut="B">
+              <button
+                type="button"
+                onClick={onQuickAddBookmark}
+                aria-label="Add Bookmark at Current Time"
+                className="p-2 rounded-xl text-gray-300 hover:text-cyan-400 hover:bg-white/10 transition-colors active:scale-90"
+              >
+                <BookmarkPlus className="w-4 h-4" />
+              </button>
+            </Tooltip>
+          )}
+
+          {/* Bookmarks Drawer Toggle */}
+          {onToggleBookmarks && (
+            <Tooltip content="Open Bookmarks Panel" shortcut="Shift+M">
+              <button
+                type="button"
+                onClick={onToggleBookmarks}
+                aria-label="Bookmarks panel"
+                className="relative p-2 rounded-xl text-gray-300 hover:text-cyan-400 hover:bg-white/10 transition-colors flex items-center gap-1"
+              >
+                <Bookmark className="w-4 h-4" />
+                {currentVideoBookmarks.length > 0 && (
+                  <span className="text-[10px] font-bold font-mono-time text-cyan-400">
+                    {currentVideoBookmarks.length}
+                  </span>
+                )}
+              </button>
+            </Tooltip>
+          )}
 
           {/* Loop toggle */}
           <Tooltip content={settings.loop ? 'Loop Enabled' : 'Loop Disabled'} shortcut="L">

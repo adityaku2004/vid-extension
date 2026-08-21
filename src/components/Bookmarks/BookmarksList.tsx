@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Bookmark,
   BookmarkPlus,
@@ -11,7 +11,9 @@ import {
   Search,
   Copy,
   Tag,
-  Film
+  Film,
+  Sparkles,
+  RotateCcw
 } from 'lucide-react';
 import { VideoBookmark, PlaylistItem } from '../../types';
 import { formatTime } from '../../utils/formatTime';
@@ -40,10 +42,28 @@ const PRESET_COLORS = [
   '#FF9100'  // Amber
 ];
 
+// Helper to parse string timestamp (MM:SS or HH:MM:SS or pure seconds) to number
+function parseTimeString(timeStr: string): number | null {
+  const clean = timeStr.trim();
+  if (!clean) return null;
+  if (!isNaN(Number(clean))) {
+    return Math.max(0, Number(clean));
+  }
+  const parts = clean.split(':').map((p) => Number(p));
+  if (parts.some((p) => isNaN(p))) return null;
+  if (parts.length === 2) {
+    return parts[0] * 60 + parts[1];
+  }
+  if (parts.length === 3) {
+    return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  }
+  return null;
+}
+
 export const BookmarksList: React.FC<BookmarksListProps> = ({
   currentVideo,
-  currentTime,
-  duration,
+  currentTime = 0,
+  duration = 0,
   bookmarks,
   allVideos = [],
   onSeek,
@@ -58,9 +78,18 @@ export const BookmarksList: React.FC<BookmarksListProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState('');
   const [newLabelInput, setNewLabelInput] = useState('');
+  const [customTimeStr, setCustomTimeStr] = useState('');
+  const [useCurrentTime, setUseCurrentTime] = useState(true);
   const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);
   const [isAddingCustom, setIsAddingCustom] = useState(false);
   const [filterMode, setFilterMode] = useState<'current' | 'all'>('current');
+
+  // Sync custom time string with current time whenever custom modal opens or current time updates if useCurrentTime is true
+  useEffect(() => {
+    if (useCurrentTime) {
+      setCustomTimeStr(formatTime(currentTime, duration >= 3600));
+    }
+  }, [currentTime, duration, useCurrentTime]);
 
   const currentVideoBookmarks = bookmarks.filter(
     (bm) => !currentVideo || bm.videoId === currentVideo.id
@@ -78,10 +107,27 @@ export const BookmarksList: React.FC<BookmarksListProps> = ({
     })
     .sort((a, b) => a.timestamp - b.timestamp);
 
-  const handleQuickAdd = () => {
-    const formatted = formatTime(currentTime, duration >= 3600);
-    const label = newLabelInput.trim() || `Bookmark at ${formatted}`;
+  const formattedCurrentTime = formatTime(currentTime, duration >= 3600);
+
+  const handleQuickAddCurrent = () => {
+    const label = newLabelInput.trim() || `Bookmark at ${formattedCurrentTime}`;
     onAddBookmark(label, selectedColor, currentTime);
+    setNewLabelInput('');
+    setIsAddingCustom(false);
+    onShowToast?.(`Saved bookmark at ${formattedCurrentTime}`);
+  };
+
+  const handleCustomAdd = () => {
+    let targetTimestamp = currentTime;
+    if (!useCurrentTime && customTimeStr.trim()) {
+      const parsed = parseTimeString(customTimeStr);
+      if (parsed !== null) {
+        targetTimestamp = duration > 0 ? Math.min(duration, Math.max(0, parsed)) : parsed;
+      }
+    }
+    const formatted = formatTime(targetTimestamp, duration >= 3600);
+    const label = newLabelInput.trim() || `Bookmark at ${formatted}`;
+    onAddBookmark(label, selectedColor, targetTimestamp);
     setNewLabelInput('');
     setIsAddingCustom(false);
     onShowToast?.(`Saved bookmark "${label}" at ${formatted}`);
@@ -122,57 +168,136 @@ export const BookmarksList: React.FC<BookmarksListProps> = ({
       {/* Quick Add Form / Bar */}
       <div className="p-3 bg-[#181a20]/80 border-b border-white/10 space-y-2.5">
         {!isAddingCustom ? (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                const formatted = formatTime(currentTime, duration >= 3600);
-                onAddBookmark(`Bookmark at ${formatted}`, selectedColor, currentTime);
-                onShowToast?.(`Added bookmark at ${formatted}`);
-              }}
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-xs transition-all shadow-md shadow-cyan-500/20 active:scale-98"
-            >
-              <BookmarkPlus className="w-4 h-4" />
-              <span>
-                Bookmark at {formatTime(currentTime, duration >= 3600)}
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsAddingCustom(true)}
-              className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-gray-200 hover:text-white transition-colors text-xs font-medium"
-              title="Add with custom title & color"
-            >
-              <Tag className="w-3.5 h-3.5" />
-            </button>
+          <div className="space-y-2">
+            {/* Primary Action Button: Bookmark at Current Time */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleQuickAddCurrent}
+                className="flex-1 flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs transition-all shadow-md shadow-cyan-500/20 active:scale-98 group"
+              >
+                <BookmarkPlus className="w-4 h-4 text-black group-hover:scale-110 transition-transform" />
+                <span>Bookmark at Current Time ({formattedCurrentTime})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCustomTimeStr(formattedCurrentTime);
+                  setUseCurrentTime(true);
+                  setIsAddingCustom(true);
+                }}
+                className="px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-gray-200 hover:text-white transition-colors text-xs font-medium flex items-center gap-1.5"
+                title="Add bookmark with custom title, color, or specific timestamp"
+              >
+                <Tag className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Custom</span>
+              </button>
+            </div>
           </div>
         ) : (
-          <div className="p-2.5 rounded-xl bg-black/40 border border-cyan-500/30 space-y-2 animate-in fade-in zoom-in-95 duration-100">
-            <div className="flex items-center justify-between text-[11px] font-semibold text-cyan-300">
-              <span className="flex items-center gap-1">
-                <BookmarkPlus className="w-3.5 h-3.5" />
-                Add Bookmark at {formatTime(currentTime, duration >= 3600)}
+          <div className="p-3 rounded-xl bg-black/50 border border-cyan-500/40 space-y-2.5 animate-in fade-in zoom-in-95 duration-100">
+            <div className="flex items-center justify-between text-xs font-semibold text-cyan-300">
+              <span className="flex items-center gap-1.5">
+                <BookmarkPlus className="w-4 h-4 text-cyan-400" />
+                New Bookmark
               </span>
               <button
                 type="button"
                 onClick={() => setIsAddingCustom(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-gray-400 hover:text-white p-0.5 rounded"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <input
-              type="text"
-              value={newLabelInput}
-              onChange={(e) => setNewLabelInput(e.target.value)}
-              placeholder="Enter bookmark title (e.g., Epic Battle Scene)..."
-              autoFocus
-              onKeyDown={(e) => e.key === 'Enter' && handleQuickAdd()}
-              className="w-full px-2.5 py-1.5 rounded-lg bg-black/60 border border-white/10 text-white text-xs placeholder-gray-500 focus:outline-none focus:border-cyan-500/70"
-            />
+            {/* Bookmark Title */}
+            <div>
+              <label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">
+                Bookmark Title
+              </label>
+              <input
+                type="text"
+                value={newLabelInput}
+                onChange={(e) => setNewLabelInput(e.target.value)}
+                placeholder={`e.g. Favorite Scene (${useCurrentTime ? formattedCurrentTime : customTimeStr || formattedCurrentTime})`}
+                autoFocus
+                onKeyDown={(e) => e.key === 'Enter' && handleCustomAdd()}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-black/70 border border-white/15 text-white text-xs placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+              />
+            </div>
 
-            <div className="flex items-center justify-between pt-1">
+            {/* Timestamp Selector: At Current Time vs Custom Timestamp */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-[10px] uppercase font-bold text-gray-400">
+                <span>Timestamp</span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUseCurrentTime(true);
+                      setCustomTimeStr(formattedCurrentTime);
+                    }}
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                      useCurrentTime
+                        ? 'bg-cyan-500 text-black'
+                        : 'bg-white/10 text-gray-300 hover:text-white'
+                    }`}
+                  >
+                    Current ({formattedCurrentTime})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUseCurrentTime(false)}
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                      !useCurrentTime
+                        ? 'bg-cyan-500 text-black'
+                        : 'bg-white/10 text-gray-300 hover:text-white'
+                    }`}
+                  >
+                    Manual
+                  </button>
+                </div>
+              </div>
+
+              {!useCurrentTime ? (
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Clock className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
+                    <input
+                      type="text"
+                      value={customTimeStr}
+                      onChange={(e) => setCustomTimeStr(e.target.value)}
+                      placeholder="MM:SS or HH:MM:SS (e.g. 02:45)"
+                      className="w-full pl-8 pr-2.5 py-1.5 rounded-lg bg-black/70 border border-white/15 font-mono-time text-cyan-300 text-xs focus:outline-none focus:border-cyan-500"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCustomTimeStr(formattedCurrentTime);
+                      setUseCurrentTime(true);
+                    }}
+                    className="px-2 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-gray-300 text-[11px] font-medium whitespace-nowrap"
+                    title="Reset to current video timestamp"
+                  >
+                    Use Live
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-2 rounded-lg bg-black/40 border border-white/10 text-xs">
+                  <span className="text-gray-300 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                    Current Playback Time
+                  </span>
+                  <span className="font-mono-time font-bold text-cyan-300">
+                    {formattedCurrentTime}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Color Accent Picker & Save */}
+            <div className="flex items-center justify-between pt-1 border-t border-white/10">
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] text-gray-400">Color:</span>
                 {PRESET_COLORS.map((c) => (
@@ -181,19 +306,28 @@ export const BookmarksList: React.FC<BookmarksListProps> = ({
                     type="button"
                     onClick={() => setSelectedColor(c)}
                     className={`w-4 h-4 rounded-full transition-transform ${
-                      selectedColor === c ? 'scale-125 ring-2 ring-white' : 'hover:scale-110 opacity-70'
+                      selectedColor === c ? 'scale-125 ring-2 ring-white shadow-md' : 'hover:scale-110 opacity-70'
                     }`}
                     style={{ backgroundColor: c }}
                   />
                 ))}
               </div>
-              <button
-                type="button"
-                onClick={handleQuickAdd}
-                className="px-3 py-1 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs"
-              >
-                Save
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setIsAddingCustom(false)}
+                  className="px-2.5 py-1 rounded-lg text-gray-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCustomAdd}
+                  className="px-3.5 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs shadow-md shadow-cyan-500/20"
+                >
+                  Save Bookmark
+                </button>
+              </div>
             </div>
           </div>
         )}

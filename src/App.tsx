@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   PlaylistItem,
   PlayerSettings,
@@ -13,6 +13,7 @@ import { parseVTT } from './utils/vttParser';
 import { parseASS } from './utils/assParser';
 import { extractMkvSubtitles, isMkvContainer } from './utils/mkvSubtitleParser';
 import { cleanTitleFromFilename, generateId, isVideoFile, isSubtitleFile } from './utils/fileHelpers';
+import { formatTime } from './utils/formatTime';
 import { extensionStorage } from './utils/extensionStorage';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { EmptyState } from './components/EmptyState/EmptyState';
@@ -72,6 +73,9 @@ export default function App() {
   // Playlist & Active Media State
   const [playlist, setPlaylist] = useState<PlaylistItem[]>(SAMPLE_VIDEOS);
   const [currentVideo, setCurrentVideo] = useState<PlaylistItem | null>(null);
+  const [currentPlaybackTime, setCurrentPlaybackTime] = useState<number>(0);
+  const [currentPlaybackDuration, setCurrentPlaybackDuration] = useState<number>(0);
+  const seekToVideoRef = useRef<((time: number) => void) | null>(null);
 
   // Bookmarks State & Persistence
   const [bookmarks, setBookmarks] = useLocalStorage<VideoBookmark[]>(
@@ -105,13 +109,14 @@ export default function App() {
   const handleAddBookmark = useCallback(
     (label?: string, color?: string, time?: number) => {
       if (!currentVideo) return;
-      const targetTime = time !== undefined ? Math.max(0, time) : 0;
+      const targetTime = time !== undefined ? Math.max(0, time) : Math.max(0, currentPlaybackTime);
+      const formattedTime = formatTime(targetTime, currentPlaybackDuration >= 3600);
       const newBm: VideoBookmark = {
         id: generateId(),
         videoId: currentVideo.id,
         videoTitle: currentVideo.title,
         timestamp: targetTime,
-        label: label || `Bookmark at ${Math.floor(targetTime)}s`,
+        label: label || `Bookmark at ${formattedTime}`,
         createdAt: Date.now(),
         color: color || '#00F0FF'
       };
@@ -128,7 +133,7 @@ export default function App() {
       });
       showToast(`Saved bookmark: "${newBm.label}"`);
     },
-    [currentVideo, setBookmarks, showToast]
+    [currentVideo, currentPlaybackTime, currentPlaybackDuration, setBookmarks, showToast]
   );
 
   const handleUpdateBookmark = useCallback(
@@ -421,11 +426,21 @@ export default function App() {
               const target = playlist.find((v) => v.id === bm.videoId);
               if (target) setCurrentVideo(target);
             }
+            if (seekToVideoRef.current) {
+              seekToVideoRef.current(bm.timestamp);
+            }
           }}
           onToggleSettings={() => setIsSettingsOpen(!isSettingsOpen)}
           onToggleEqualizer={() => setIsEqualizerOpen(!isEqualizerOpen)}
           onToggleShortcuts={() => setIsShortcutsOpen(!isShortcutsOpen)}
           onShowToast={showToast}
+          onTimeUpdate={(t, d) => {
+            setCurrentPlaybackTime(t);
+            setCurrentPlaybackDuration(d);
+          }}
+          onRegisterSeek={(seekFn) => {
+            seekToVideoRef.current = seekFn;
+          }}
         />
       )}
 
@@ -435,8 +450,15 @@ export default function App() {
         onClose={() => setIsPlaylistOpen(false)}
         playlist={playlist}
         currentVideoId={currentVideo?.id}
+        currentTime={currentPlaybackTime}
+        duration={currentPlaybackDuration}
         bookmarks={bookmarks}
         initialTab={playlistTab}
+        onSeek={(time) => {
+          if (seekToVideoRef.current) {
+            seekToVideoRef.current(time);
+          }
+        }}
         onSelectVideo={(video) => {
           handleSelectVideo(video);
           setIsPlaylistOpen(false);

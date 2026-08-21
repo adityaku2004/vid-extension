@@ -48,6 +48,8 @@ interface VideoPlayerProps {
   onToggleEqualizer: () => void;
   onToggleShortcuts: () => void;
   onShowToast: (text: string) => void;
+  onTimeUpdate?: (currentTime: number, duration: number) => void;
+  onRegisterSeek?: (seekFn: (time: number) => void) => void;
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({
@@ -73,7 +75,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   onToggleSettings,
   onToggleEqualizer,
   onToggleShortcuts,
-  onShowToast
+  onShowToast,
+  onTimeUpdate,
+  onRegisterSeek
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -116,6 +120,16 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     onVideoEnd: onNextVideo,
     onShowToast
   });
+
+  // Keep parent in sync with active playback time & duration
+  useEffect(() => {
+    onTimeUpdate?.(currentTime, duration);
+  }, [currentTime, duration, onTimeUpdate]);
+
+  // Expose active player seekTo function to parent
+  useEffect(() => {
+    onRegisterSeek?.(seekTo);
+  }, [seekTo, onRegisterSeek]);
 
   // Cycle Aspect Ratio mode
   const cycleAspectRatio = useCallback(() => {
