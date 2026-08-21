@@ -22,6 +22,8 @@ import { SubtitleOverlay } from './SubtitleOverlay';
 import { GestureOverlay } from './GestureOverlay';
 import { PlayerContextMenu } from '../ContextMenu/PlayerContextMenu';
 import { ResumePrompt } from '../ResumePrompt/ResumePrompt';
+import { ScreenshotNotification, ScreenshotNotificationData } from './ScreenshotNotification';
+import { captureVideoScreenshot } from '../../utils/screenshot';
 import { extensionStorage } from '../../utils/extensionStorage';
 
 interface VideoPlayerProps {
@@ -88,6 +90,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     show: false,
     savedTime: 0
   });
+  const [screenshotData, setScreenshotData] = useState<ScreenshotNotificationData | null>(null);
+  const [isFlashing, setIsFlashing] = useState(false);
 
   const { isFullscreen, toggleFullscreen } = useFullscreen(containerRef);
 
@@ -192,6 +196,39 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
   }, [onAddBookmark, currentTime]);
 
+  // Capture pristine high-res screenshot of current frame
+  const handleTakeScreenshot = useCallback(async () => {
+    if (!videoRef.current) return;
+
+    // Trigger visual camera shutter flash effect
+    setIsFlashing(true);
+    setTimeout(() => {
+      setIsFlashing(false);
+    }, 220);
+
+    const result = await captureVideoScreenshot(
+      videoRef.current,
+      currentVideo?.title || 'Video',
+      currentTime,
+      {
+        includeSubtitleText: subtitleSettings.enabled && activeCue ? activeCue.text : null
+      }
+    );
+
+    if (result.success && result.dataUrl) {
+      setScreenshotData({
+        dataUrl: result.dataUrl,
+        filename: result.filename,
+        width: result.width,
+        height: result.height,
+        copiedToClipboard: result.copiedToClipboard
+      });
+      onShowToast(`Screenshot saved (${result.width}×${result.height})`);
+    } else {
+      onShowToast(result.error || 'Failed to capture screenshot');
+    }
+  }, [videoRef, currentVideo?.title, currentTime, subtitleSettings.enabled, activeCue, onShowToast]);
+
   // Keyboard Shortcuts Hook
   useKeyboardShortcuts({
     onTogglePlay: togglePlay,
@@ -220,6 +257,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     onTogglePlaylist,
     onToggleBookmarks,
     onAddBookmark: handleQuickAddBookmark,
+    onTakeScreenshot: handleTakeScreenshot,
     onToggleSettings,
     onToggleHelp: onToggleShortcuts,
     onEscape: () => {
@@ -264,8 +302,20 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         src={currentVideo?.url}
         style={getVideoStyle()}
         playsInline
+        crossOrigin="anonymous"
         preload="auto"
         className="w-full h-full max-h-screen transition-all duration-200"
+      />
+
+      {/* Shutter Flash Animation */}
+      {isFlashing && (
+        <div className="absolute inset-0 z-50 bg-white pointer-events-none transition-opacity duration-200" />
+      )}
+
+      {/* Screenshot Saved Notification Floating Card */}
+      <ScreenshotNotification
+        data={screenshotData}
+        onClose={() => setScreenshotData(null)}
       />
 
       {/* 2. Subtitle Renderer Layer */}
@@ -374,6 +424,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
           onCycleAspectRatio={cycleAspectRatio}
           playlistCount={playlist.length}
           bookmarkCount={currentVideoBookmarks.length}
+          onTakeScreenshot={handleTakeScreenshot}
         />
       </div>
 
@@ -414,6 +465,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
           onToggleSettings={onToggleSettings}
           onToggleBookmarks={onToggleBookmarks}
           onQuickAddBookmark={handleQuickAddBookmark}
+          onTakeScreenshot={handleTakeScreenshot}
           onSelectBookmark={(bm) => {
             seekTo(bm.timestamp);
             onSelectBookmark?.(bm);
@@ -453,6 +505,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         onOpenSettings={onToggleSettings}
         onAddBookmark={handleQuickAddBookmark}
         onOpenBookmarks={onToggleBookmarks}
+        onTakeScreenshot={handleTakeScreenshot}
         onShowStats={() => {
           onShowToast(
             `${currentVideo?.metadata?.resolution || '1080p'} • ${

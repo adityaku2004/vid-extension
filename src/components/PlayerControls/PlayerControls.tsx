@@ -15,7 +15,8 @@ import {
   Repeat,
   Sparkles,
   Bookmark,
-  BookmarkPlus
+  BookmarkPlus,
+  Camera
 } from 'lucide-react';
 import { PlaylistItem, PlayerSettings, SubtitleSettings, AspectRatioMode, VideoBookmark } from '../../types';
 import { formatTime, formatRemainingTime } from '../../utils/formatTime';
@@ -57,6 +58,7 @@ interface PlayerControlsProps {
   onToggleBookmarks?: () => void;
   onQuickAddBookmark?: () => void;
   onSelectBookmark?: (bookmark: VideoBookmark) => void;
+  onTakeScreenshot?: () => void;
 }
 
 export const PlayerControls: React.FC<PlayerControlsProps> = ({
@@ -90,7 +92,8 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   onToggleSettings,
   onToggleBookmarks,
   onQuickAddBookmark,
-  onSelectBookmark
+  onSelectBookmark,
+  onTakeScreenshot
 }) => {
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [showSubMenu, setShowSubMenu] = useState(false);
@@ -233,6 +236,20 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
                 className="p-2 rounded-xl text-gray-300 hover:text-cyan-400 hover:bg-white/10 transition-colors active:scale-90"
               >
                 <BookmarkPlus className="w-4 h-4" />
+              </button>
+            </Tooltip>
+          )}
+
+          {/* Capture Screenshot Button */}
+          {onTakeScreenshot && (
+            <Tooltip content="Capture High-Res Screenshot" shortcut="Shift+S">
+              <button
+                type="button"
+                onClick={onTakeScreenshot}
+                aria-label="Capture Screenshot"
+                className="p-2 rounded-xl text-gray-300 hover:text-cyan-400 hover:bg-white/10 transition-colors active:scale-90"
+              >
+                <Camera className="w-4 h-4" />
               </button>
             </Tooltip>
           )}

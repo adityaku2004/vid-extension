@@ -15,7 +15,8 @@ import {
   Settings,
   Zap,
   Bookmark,
-  BookmarkPlus
+  BookmarkPlus,
+  Camera
 } from 'lucide-react';
 import { AspectRatioMode } from '../../types';
 
@@ -46,6 +47,7 @@ interface PlayerContextMenuProps {
   onShowStats: () => void;
   onAddBookmark?: () => void;
   onOpenBookmarks?: () => void;
+  onTakeScreenshot?: () => void;
 }
 
 export const PlayerContextMenu: React.FC<PlayerContextMenuProps> = ({
@@ -69,7 +71,8 @@ export const PlayerContextMenu: React.FC<PlayerContextMenuProps> = ({
   onOpenSettings,
   onShowStats,
   onAddBookmark,
-  onOpenBookmarks
+  onOpenBookmarks,
+  onTakeScreenshot
 }) => {
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -184,6 +187,23 @@ export const PlayerContextMenu: React.FC<PlayerContextMenuProps> = ({
             <Bookmark className="w-4 h-4 text-gray-400" />
             <span>View Bookmarks</span>
           </div>
+        </button>
+      )}
+
+      {onTakeScreenshot && (
+        <button
+          type="button"
+          onClick={() => {
+            onTakeScreenshot();
+            onClose();
+          }}
+          className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-gray-200 hover:text-cyan-300 hover:bg-white/10 transition-colors"
+        >
+          <div className="flex items-center gap-2.5">
+            <Camera className="w-4 h-4 text-cyan-400" />
+            <span>Take Screenshot</span>
+          </div>
+          <span className="text-[10px] font-mono-time text-gray-500">Shift+S</span>
         </button>
       )}
 

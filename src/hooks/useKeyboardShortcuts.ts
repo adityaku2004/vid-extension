@@ -18,6 +18,7 @@ interface KeyboardShortcutHandlers {
   onTogglePlaylist?: () => void;
   onToggleBookmarks?: () => void;
   onAddBookmark?: () => void;
+  onTakeScreenshot?: () => void;
   onToggleSettings?: () => void;
   onToggleHelp?: () => void;
   onEscape?: () => void;
@@ -140,7 +141,11 @@ export function useKeyboardShortcuts(
         case 's':
         case 'S':
           e.preventDefault();
-          handlers.onCyclePlaybackSpeed();
+          if (e.shiftKey) {
+            handlers.onTakeScreenshot?.();
+          } else {
+            handlers.onCyclePlaybackSpeed();
+          }
           break;
 
         case 'a':

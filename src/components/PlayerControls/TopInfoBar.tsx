@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, ListVideo, Settings, Sliders, Ratio, Info, Bookmark } from 'lucide-react';
+import { ArrowLeft, ListVideo, Settings, Sliders, Ratio, Info, Bookmark, Camera } from 'lucide-react';
 import { PlaylistItem, AspectRatioMode } from '../../types';
 import { formatTime } from '../../utils/formatTime';
 import { formatFileSize } from '../../utils/fileHelpers';
@@ -17,6 +17,7 @@ interface TopInfoBarProps {
   onCycleAspectRatio: () => void;
   playlistCount: number;
   bookmarkCount?: number;
+  onTakeScreenshot?: () => void;
 }
 
 export const TopInfoBar: React.FC<TopInfoBarProps> = ({
@@ -30,7 +31,8 @@ export const TopInfoBar: React.FC<TopInfoBarProps> = ({
   onToggleEqualizer,
   onCycleAspectRatio,
   playlistCount,
-  bookmarkCount = 0
+  bookmarkCount = 0,
+  onTakeScreenshot
 }) => {
   const metadata = currentVideo?.metadata;
   const resolution = metadata?.resolution || (duration > 0 ? 'HD 1080p' : '');
@@ -95,6 +97,19 @@ export const TopInfoBar: React.FC<TopInfoBarProps> = ({
             <span className="hidden sm:inline text-[11px] uppercase">{aspectRatio}</span>
           </button>
         </Tooltip>
+
+        {onTakeScreenshot && (
+          <Tooltip content="Capture Screenshot" shortcut="Shift+S">
+            <button
+              type="button"
+              onClick={onTakeScreenshot}
+              aria-label="Capture Screenshot"
+              className="p-2 rounded-xl bg-black/40 hover:bg-white/15 border border-white/10 text-gray-300 hover:text-cyan-400 transition-colors backdrop-blur-md"
+            >
+              <Camera className="w-4 h-4" />
+            </button>
+          </Tooltip>
+        )}
 
         <Tooltip content="Audio Effects & Boost">
           <button

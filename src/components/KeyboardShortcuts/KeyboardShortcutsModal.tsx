@@ -36,6 +36,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
       { key: 'Shift + B', desc: 'Toggle Audio Boost (200%)' },
     ]},
     { group: 'Bookmarks & Navigation', items: [
+      { key: 'Shift + S', desc: 'Capture high-res screenshot to file' },
       { key: 'B', desc: 'Save Bookmark at current timestamp' },
       { key: 'Shift + M', desc: 'Open Bookmarks panel' },
       { key: 'F', desc: 'Toggle Fullscreen' },
