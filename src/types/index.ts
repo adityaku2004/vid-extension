@@ -39,6 +39,14 @@ export interface VideoMetadata {
   framerate?: number;
   codec?: string;
   aspectRatio?: string;
+  audioCodec?: string;
+  isAudioOnly?: boolean;
+  videoCodecDetails?: string;
+  audioCodecDetails?: string;
+  hasUnsupportedVideoCodec?: boolean;
+  issueDescription?: string | null;
+  recommendedFfmpegCommand?: string;
+  losslessRemuxCommand?: string;
 }
 
 export interface VideoBookmark {

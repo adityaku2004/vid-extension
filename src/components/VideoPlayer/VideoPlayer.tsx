@@ -20,6 +20,8 @@ import { TopInfoBar } from '../PlayerControls/TopInfoBar';
 import { PlayerControls } from '../PlayerControls/PlayerControls';
 import { SubtitleOverlay } from './SubtitleOverlay';
 import { GestureOverlay } from './GestureOverlay';
+import { AudioOnlyVisualizer } from './AudioOnlyVisualizer';
+import { CodecDiagnosticModal } from './CodecDiagnosticModal';
 import { PlayerContextMenu } from '../ContextMenu/PlayerContextMenu';
 import { ResumePrompt } from '../ResumePrompt/ResumePrompt';
 import { ScreenshotNotification, ScreenshotNotificationData } from './ScreenshotNotification';
@@ -92,6 +94,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   });
   const [screenshotData, setScreenshotData] = useState<ScreenshotNotificationData | null>(null);
   const [isFlashing, setIsFlashing] = useState(false);
+  const [isDiagnosticOpen, setIsDiagnosticOpen] = useState(false);
 
   const { isFullscreen, toggleFullscreen } = useFullscreen(containerRef);
 
@@ -110,6 +113,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     error,
     setError,
     activeCue,
+    isAudioOnly,
     togglePlay,
     play,
     seekTo,
@@ -318,14 +322,25 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         onClose={() => setScreenshotData(null)}
       />
 
-      {/* 2. Subtitle Renderer Layer */}
+      {/* 2. Audio-Only / Unsupported MKV Video Stream Visualizer Overlay */}
+      {isAudioOnly && !error && (
+        <AudioOnlyVisualizer
+          currentVideo={currentVideo}
+          isPlaying={isPlaying}
+          onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
+          onOpenEqualizer={onToggleEqualizer}
+          onShowToast={onShowToast}
+        />
+      )}
+
+      {/* 3. Subtitle Renderer Layer */}
       <SubtitleOverlay
         cue={activeCue}
         settings={subtitleSettings}
         controlsVisible={controlsVisible}
       />
 
-      {/* 3. Interactive Gesture Overlay (Seek ripples, click play/pause, volume swipe, drag/drop) */}
+      {/* 4. Interactive Gesture Overlay (Seek ripples, click play/pause, volume swipe, drag/drop) */}
       <GestureOverlay
         isPlaying={isPlaying}
         volume={volume}
@@ -425,6 +440,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
           playlistCount={playlist.length}
           bookmarkCount={currentVideoBookmarks.length}
           onTakeScreenshot={handleTakeScreenshot}
+          onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
         />
       </div>
 
@@ -506,6 +522,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         onAddBookmark={handleQuickAddBookmark}
         onOpenBookmarks={onToggleBookmarks}
         onTakeScreenshot={handleTakeScreenshot}
+        onOpenDiagnostic={() => setIsDiagnosticOpen(true)}
         onShowStats={() => {
           onShowToast(
             `${currentVideo?.metadata?.resolution || '1080p'} • ${
@@ -513,6 +530,14 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             } • Buffer ${Math.round(bufferedPercent)}%`
           );
         }}
+      />
+
+      {/* 10. MKV Codec & Stream Inspector Diagnostic Modal */}
+      <CodecDiagnosticModal
+        isOpen={isDiagnosticOpen}
+        onClose={() => setIsDiagnosticOpen(false)}
+        currentVideo={currentVideo}
+        onShowToast={onShowToast}
       />
     </div>
   );

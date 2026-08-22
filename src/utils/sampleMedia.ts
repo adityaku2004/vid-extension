@@ -227,5 +227,45 @@ export const SAMPLE_VIDEOS: PlaylistItem[] = [
       }
     ],
     selectedSubtitleTrackId: 'sub-mkv-en'
+  },
+  {
+    id: 'sample-mkv-hevc-diagnostic',
+    title: 'Cyberpunk Odyssey (MKV Stream & Audio Visualizer Demo)',
+    url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
+    duration: 47,
+    isSample: true,
+    dateAdded: Date.now() - 3600000,
+    posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80',
+    metadata: {
+      filename: 'CyberpunkOdyssey.HEVC.10bit.mkv',
+      resolution: '3840 × 2160 (4K UHD)',
+      duration: 47,
+      fileSize: 48920192,
+      videoType: 'video/x-matroska (MKV Container)',
+      framerate: 60,
+      codec: 'V_MPEGH/ISO/HEVC (10-bit Main 10)',
+      videoCodecDetails: 'HEVC / H.265 (V_MPEGH/ISO/HEVC)',
+      audioCodec: 'A_AAC / 48kHz Stereo (320kbps)',
+      audioCodecDetails: 'AAC-LC / 48kHz Stereo 5.1 Surround',
+      aspectRatio: '16:9',
+      hasUnsupportedVideoCodec: true,
+      isAudioOnly: true,
+      issueDescription: 'Video stream encoded in 10-bit HEVC (H.265). Audio stream plays cleanly in real-time visualizer mode.',
+      recommendedFfmpegCommand: 'ffmpeg -i "CyberpunkOdyssey.HEVC.10bit.mkv" -c:v libx264 -crf 18 -preset fast -c:a copy "CyberpunkOdyssey_h264.mp4"',
+      losslessRemuxCommand: 'ffmpeg -i "CyberpunkOdyssey.HEVC.10bit.mkv" -c copy "CyberpunkOdyssey_remuxed.mp4"'
+    },
+    subtitleTracks: [
+      {
+        id: 'sub-demo-1',
+        label: 'English [MKV Embedded Track 1]',
+        language: 'en',
+        cues: [
+          { id: 1, startTime: 1, endTime: 5, text: "High-Fidelity Audio Mode Active: 200% Boost & 10-Band Equalizer Ready" },
+          { id: 2, startTime: 6, endTime: 12, text: "Real-time spectrum visualization syncing with audio waveform." }
+        ],
+        isCustom: false
+      }
+    ],
+    selectedSubtitleTrackId: 'sub-demo-1'
   }
 ];

@@ -12,6 +12,7 @@ import { parseSRT } from './utils/srtParser';
 import { parseVTT } from './utils/vttParser';
 import { parseASS } from './utils/assParser';
 import { extractMkvSubtitles, isMkvContainer } from './utils/mkvSubtitleParser';
+import { inspectAndDiagnoseMkv } from './utils/mkvDiagnostics';
 import { cleanTitleFromFilename, generateId, isVideoFile, isSubtitleFile } from './utils/fileHelpers';
 import { formatTime } from './utils/formatTime';
 import { extensionStorage } from './utils/extensionStorage';
@@ -226,13 +227,15 @@ export default function App() {
           const objectUrl = URL.createObjectURL(file);
           const isMkv = await isMkvContainer(file);
           let embeddedSubs: SubtitleTrack[] = [];
+          let mkvInfo: Awaited<ReturnType<typeof inspectAndDiagnoseMkv>> | null = null;
 
           if (isMkv) {
             try {
+              mkvInfo = await inspectAndDiagnoseMkv(file, file.name);
               embeddedSubs = await extractMkvSubtitles(file);
               totalEmbeddedSubsFound += embeddedSubs.length;
             } catch (e) {
-              console.warn('Error extracting MKV embedded subtitles:', e);
+              console.warn('Error extracting MKV metadata or embedded subtitles:', e);
             }
           }
 
@@ -247,7 +250,19 @@ export default function App() {
             metadata: {
               filename: file.name,
               fileSize: file.size,
-              videoType: isMkv ? 'video/x-matroska (MKV Container)' : (file.type || 'video/mp4')
+              videoType: isMkv ? 'video/x-matroska (MKV Container)' : (file.type || 'video/mp4'),
+              codec: mkvInfo?.videoCodecName,
+              videoCodecDetails: mkvInfo?.videoCodecName,
+              audioCodec: mkvInfo?.audioCodecName,
+              audioCodecDetails: mkvInfo?.audioCodecName,
+              resolution: mkvInfo?.videoTrack?.pixelWidth
+                ? `${mkvInfo.videoTrack.pixelWidth}×${mkvInfo.videoTrack.pixelHeight}`
+                : undefined,
+              hasUnsupportedVideoCodec: mkvInfo ? !mkvInfo.isBrowserCompatibleVideo : false,
+              isAudioOnly: mkvInfo ? mkvInfo.isAudioOnlyPlayable || !mkvInfo.hasVideoTrack : false,
+              issueDescription: mkvInfo?.issueDescription,
+              recommendedFfmpegCommand: mkvInfo?.recommendedFfmpegCommand,
+              losslessRemuxCommand: mkvInfo?.losslessRemuxCommand
             },
             subtitleTracks: combinedSubs,
             selectedSubtitleTrackId: combinedSubs.length > 0 ? combinedSubs[0].id : null
@@ -257,7 +272,11 @@ export default function App() {
         setPlaylist((prev) => [...newItems, ...prev]);
         setCurrentVideo(newItems[0]);
 
-        if (totalEmbeddedSubsFound > 0) {
+        if (newItems[0]?.metadata?.hasUnsupportedVideoCodec) {
+          showToast(
+            `MKV Loaded: Audio stream ready. Video format (${newItems[0].metadata.codec}) detected.`
+          );
+        } else if (totalEmbeddedSubsFound > 0) {
           setSubtitleSettings((prev) => ({ ...prev, enabled: true }));
           showToast(
             `Loaded MKV video with ${totalEmbeddedSubsFound} embedded subtitle track${

@@ -36,6 +36,7 @@ export function useVideoPlayer({
   const [aspectRatio, setAspectRatio] = useState<AspectRatioMode>(settings.defaultAspectRatio ?? 'contain');
   const [error, setError] = useState<string | null>(null);
   const [activeCue, setActiveCue] = useState<SubtitleCue | null>(null);
+  const [isAudioOnly, setIsAudioOnly] = useState(false);
 
   // Initialize and attach Web Audio Gain Node for Audio Boost
   const setupAudioGraph = useCallback(() => {
@@ -218,18 +219,36 @@ export function useVideoPlayer({
     const video = videoRef.current;
     if (!video) return;
 
-    const onPlay = () => setIsPlaying(true);
+    const checkAudioState = () => {
+      const hasMetadataUnsupported = currentVideo?.metadata?.hasUnsupportedVideoCodec || currentVideo?.metadata?.isAudioOnly;
+      if (hasMetadataUnsupported) {
+        setIsAudioOnly(true);
+      } else if (video.videoWidth === 0 && (video.duration > 0 || video.currentTime > 0)) {
+        setIsAudioOnly(true);
+      } else if (video.videoWidth > 0) {
+        setIsAudioOnly(false);
+      }
+    };
+
+    const onPlay = () => {
+      setIsPlaying(true);
+      checkAudioState();
+    };
     const onPause = () => setIsPlaying(false);
     const onWaiting = () => setIsBuffering(true);
     const onPlaying = () => {
       setIsBuffering(false);
       setIsPlaying(true);
       setError(null);
+      checkAudioState();
     };
 
     const onTimeUpdate = () => {
       if (!isSeeking) {
         setCurrentTime(video.currentTime);
+      }
+      if (video.currentTime > 0.5 && video.videoWidth === 0 && (video.duration > 0 || !video.paused)) {
+        setIsAudioOnly(true);
       }
 
       // Update buffer progress
@@ -249,6 +268,7 @@ export function useVideoPlayer({
       setDuration(video.duration || 0);
       setIsBuffering(false);
       setError(null);
+      checkAudioState();
 
       // Apply initial rate & volume
       video.playbackRate = playbackRate;
@@ -331,6 +351,8 @@ export function useVideoPlayer({
     error,
     setError,
     activeCue,
+    isAudioOnly,
+    setIsAudioOnly,
     togglePlay,
     play,
     pause,

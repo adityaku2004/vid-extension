@@ -16,7 +16,8 @@ import {
   Zap,
   Bookmark,
   BookmarkPlus,
-  Camera
+  Camera,
+  Wrench
 } from 'lucide-react';
 import { AspectRatioMode } from '../../types';
 
@@ -48,6 +49,7 @@ interface PlayerContextMenuProps {
   onAddBookmark?: () => void;
   onOpenBookmarks?: () => void;
   onTakeScreenshot?: () => void;
+  onOpenDiagnostic?: () => void;
 }
 
 export const PlayerContextMenu: React.FC<PlayerContextMenuProps> = ({
@@ -72,7 +74,8 @@ export const PlayerContextMenu: React.FC<PlayerContextMenuProps> = ({
   onShowStats,
   onAddBookmark,
   onOpenBookmarks,
-  onTakeScreenshot
+  onTakeScreenshot,
+  onOpenDiagnostic
 }) => {
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -316,6 +319,22 @@ export const PlayerContextMenu: React.FC<PlayerContextMenuProps> = ({
           <span>Stats for Nerds</span>
         </div>
       </button>
+
+      {onOpenDiagnostic && (
+        <button
+          type="button"
+          onClick={() => {
+            onOpenDiagnostic();
+            onClose();
+          }}
+          className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-gray-200 hover:text-white hover:bg-white/10 transition-colors"
+        >
+          <div className="flex items-center gap-2.5">
+            <Wrench className="w-4 h-4 text-cyan-400" />
+            <span>MKV & Codec Diagnostic</span>
+          </div>
+        </button>
+      )}
 
       <button
         type="button"

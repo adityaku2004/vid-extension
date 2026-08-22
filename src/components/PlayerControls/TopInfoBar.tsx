@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, ListVideo, Settings, Sliders, Ratio, Info, Bookmark, Camera } from 'lucide-react';
+import { ArrowLeft, ListVideo, Settings, Sliders, Ratio, Info, Bookmark, Camera, Wrench } from 'lucide-react';
 import { PlaylistItem, AspectRatioMode } from '../../types';
 import { formatTime } from '../../utils/formatTime';
 import { formatFileSize } from '../../utils/fileHelpers';
@@ -18,6 +18,7 @@ interface TopInfoBarProps {
   playlistCount: number;
   bookmarkCount?: number;
   onTakeScreenshot?: () => void;
+  onOpenDiagnostic?: () => void;
 }
 
 export const TopInfoBar: React.FC<TopInfoBarProps> = ({
@@ -32,7 +33,8 @@ export const TopInfoBar: React.FC<TopInfoBarProps> = ({
   onCycleAspectRatio,
   playlistCount,
   bookmarkCount = 0,
-  onTakeScreenshot
+  onTakeScreenshot,
+  onOpenDiagnostic
 }) => {
   const metadata = currentVideo?.metadata;
   const resolution = metadata?.resolution || (duration > 0 ? 'HD 1080p' : '');
@@ -136,6 +138,19 @@ export const TopInfoBar: React.FC<TopInfoBarProps> = ({
                   {bookmarkCount}
                 </span>
               )}
+            </button>
+          </Tooltip>
+        )}
+
+        {onOpenDiagnostic && (
+          <Tooltip content="Codec & Stream Diagnostic">
+            <button
+              type="button"
+              onClick={onOpenDiagnostic}
+              aria-label="Codec Diagnostic"
+              className="p-2 rounded-xl bg-black/40 hover:bg-white/15 border border-white/10 text-gray-300 hover:text-cyan-400 transition-colors backdrop-blur-md"
+            >
+              <Wrench className="w-4 h-4" />
             </button>
           </Tooltip>
         )}
