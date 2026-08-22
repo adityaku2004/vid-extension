@@ -1,0 +1,76 @@
+{
+  "manifest_version": 2,
+  "name": "Cine Media Player - VLC-Like Video Player",
+  "version": "1.0.0",
+  "description": "High-performance VLC-like media player extension with MKV support, multi-track subtitles, 200% audio boost, watch history, and local file playback.",
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_title": "Cine Media Player",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": [
+    "storage",
+    "contextMenus",
+    "activeTab"
+  ],
+  "commands": {
+    "open-player": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+P",
+        "mac": "Command+Shift+P"
+      },
+      "description": "Open Cine Media Player"
+    },
+    "toggle-play": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Space",
+        "mac": "Command+Shift+Space"
+      },
+      "description": "Play / Pause Active Video"
+    },
+    "next-video": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Right",
+        "mac": "Command+Shift+Right"
+      },
+      "description": "Next Video in Playlist"
+    },
+    "prev-video": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Left",
+        "mac": "Command+Shift+Left"
+      },
+      "description": "Previous Video in Playlist"
+    }
+  },
+  "web_accessible_resources": [
+    "player.html",
+    "index.html",
+    "assets/*"
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "cine-media-player@extension.local",
+      "strict_min_version": "109.0"
+    }
+  }
+}

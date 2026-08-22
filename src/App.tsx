@@ -15,7 +15,7 @@ import { extractMkvSubtitles, isMkvContainer } from './utils/mkvSubtitleParser';
 import { inspectAndDiagnoseMkv } from './utils/mkvDiagnostics';
 import { cleanTitleFromFilename, generateId, isVideoFile, isSubtitleFile } from './utils/fileHelpers';
 import { formatTime } from './utils/formatTime';
-import { extensionStorage } from './utils/extensionStorage';
+import { browserAPI } from './browser/browserAPI';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { EmptyState } from './components/EmptyState/EmptyState';
 import { VideoPlayer } from './components/VideoPlayer/VideoPlayer';
@@ -77,6 +77,7 @@ export default function App() {
   const [currentPlaybackTime, setCurrentPlaybackTime] = useState<number>(0);
   const [currentPlaybackDuration, setCurrentPlaybackDuration] = useState<number>(0);
   const seekToVideoRef = useRef<((time: number) => void) | null>(null);
+  const lastHistorySyncRef = useRef<number>(0);
 
   // Bookmarks State & Persistence
   const [bookmarks, setBookmarks] = useLocalStorage<VideoBookmark[]>(
@@ -86,7 +87,7 @@ export default function App() {
 
   // Modals & Panels State
   const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
-  const [playlistTab, setPlaylistTab] = useState<'playlist' | 'bookmarks'>('playlist');
+  const [playlistTab, setPlaylistTab] = useState<'playlist' | 'bookmarks' | 'history' | 'library'>('playlist');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isEqualizerOpen, setIsEqualizerOpen] = useState(false);
@@ -106,6 +107,80 @@ export default function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  // Check URL query parameters for direct stream URL loading (?src=...&title=...)
+  useEffect(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const src = urlParams.get('src');
+      const title = urlParams.get('title');
+      if (src) {
+        const newItem: PlaylistItem = {
+          id: generateId(),
+          title: title ? decodeURIComponent(title) : 'Web Stream Video',
+          url: src,
+          dateAdded: Date.now(),
+          subtitleTracks: []
+        };
+        setPlaylist((prev) => [newItem, ...prev]);
+        setCurrentVideo(newItem);
+        showToast(`Playing: ${newItem.title}`);
+      }
+    } catch (e) {
+      console.debug('URL params read note:', e);
+    }
+  }, [showToast]);
+
+  // Playlist Navigation
+  const handleSelectVideo = useCallback((video: PlaylistItem) => {
+    setCurrentVideo(video);
+  }, []);
+
+  const handleNextVideo = useCallback(() => {
+    if (!currentVideo || playlist.length === 0) return;
+    const currentIndex = playlist.findIndex((v) => v.id === currentVideo.id);
+    if (currentIndex !== -1 && currentIndex < playlist.length - 1) {
+      setCurrentVideo(playlist[currentIndex + 1]);
+    } else if (playerSettings.loop && playlist.length > 0) {
+      setCurrentVideo(playlist[0]);
+    }
+  }, [currentVideo, playlist, playerSettings.loop]);
+
+  const handlePrevVideo = useCallback(() => {
+    if (!currentVideo || playlist.length === 0) return;
+    const currentIndex = playlist.findIndex((v) => v.id === currentVideo.id);
+    if (currentIndex > 0) {
+      setCurrentVideo(playlist[currentIndex - 1]);
+    }
+  }, [currentVideo, playlist]);
+
+  // Listen to Extension Runtime messages and Global Commands
+  useEffect(() => {
+    const removeListener = browserAPI.runtime.onMessage((message) => {
+      if (!message || !message.type) return;
+
+      if (message.type === 'COMMAND_PLAY_PAUSE') {
+        window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', key: ' ' }));
+      } else if (message.type === 'COMMAND_NEXT') {
+        handleNextVideo();
+      } else if (message.type === 'COMMAND_PREV') {
+        handlePrevVideo();
+      } else if (message.type === 'OPEN_VIDEO_URL' && message.payload?.videoUrl) {
+        const newItem: PlaylistItem = {
+          id: generateId(),
+          title: message.payload.title || 'Web Stream Video',
+          url: message.payload.videoUrl,
+          dateAdded: Date.now(),
+          subtitleTracks: []
+        };
+        setPlaylist((prev) => [newItem, ...prev]);
+        setCurrentVideo(newItem);
+        showToast(`Playing: ${newItem.title}`);
+      }
+    });
+
+    return () => removeListener();
+  }, [handleNextVideo, handlePrevVideo, showToast]);
+
   // Bookmark Management Handlers
   const handleAddBookmark = useCallback(
     (label?: string, color?: string, time?: number) => {
@@ -123,13 +198,10 @@ export default function App() {
       };
 
       setBookmarks((prev) => {
-        // Prevent duplicate timestamp bookmark within 1 second
         const filtered = prev.filter(
           (b) => !(b.videoId === currentVideo.id && Math.abs(b.timestamp - targetTime) < 0.8)
         );
         const updated = [...filtered, newBm];
-        // Also sync to extensionStorage
-        extensionStorage.saveBookmarks(currentVideo.id, updated.filter((b) => b.videoId === currentVideo.id));
         return updated;
       });
       showToast(`Saved bookmark: "${newBm.label}"`);
@@ -159,7 +231,6 @@ export default function App() {
   const handleClearBookmarks = useCallback(
     (videoId: string) => {
       setBookmarks((prev) => prev.filter((bm) => bm.videoId !== videoId));
-      extensionStorage.saveBookmarks(videoId, []);
     },
     [setBookmarks]
   );
@@ -174,7 +245,7 @@ export default function App() {
     setIsPlaylistOpen(true);
   }, []);
 
-  // Process Local Files (Supports dropping videos and subtitle files together, including MKV files with embedded subtitles)
+  // Process Local Files (Supports MKV, MP4, WebM, and SRT/VTT/ASS subtitles)
   const handleOpenLocalFiles = useCallback(
     async (files: FileList) => {
       const videoFiles: File[] = [];
@@ -189,7 +260,7 @@ export default function App() {
         }
       }
 
-      // Parse any dropped external subtitles (.srt, .vtt, .ass, .ssa, .sub)
+      // Parse dropped subtitles
       const parsedSubs: SubtitleTrack[] = [];
       for (const subFile of subFiles) {
         try {
@@ -287,7 +358,6 @@ export default function App() {
           showToast(`Loaded ${newItems.length} video${newItems.length > 1 ? 's' : ''}`);
         }
       } else if (parsedSubs.length > 0 && currentVideo) {
-        // If only subtitle file was dropped while video is playing, attach to current video
         const updatedVideo = {
           ...currentVideo,
           subtitleTracks: [...currentVideo.subtitleTracks, ...parsedSubs],
@@ -306,28 +376,55 @@ export default function App() {
     [currentVideo, setSubtitleSettings, showToast]
   );
 
-  // Playlist Navigation
-  const handleSelectVideo = useCallback((video: PlaylistItem) => {
-    setCurrentVideo(video);
-  }, []);
+  const handlePlayUrl = useCallback(
+    (url: string, title: string) => {
+      const newItem: PlaylistItem = {
+        id: generateId(),
+        title: title || 'Web Stream Video',
+        url,
+        dateAdded: Date.now(),
+        subtitleTracks: []
+      };
+      setPlaylist((prev) => [newItem, ...prev]);
+      setCurrentVideo(newItem);
+      showToast(`Playing: ${newItem.title}`);
+    },
+    [showToast]
+  );
 
-  const handleNextVideo = useCallback(() => {
-    if (!currentVideo || playlist.length === 0) return;
-    const currentIndex = playlist.findIndex((v) => v.id === currentVideo.id);
-    if (currentIndex !== -1 && currentIndex < playlist.length - 1) {
-      setCurrentVideo(playlist[currentIndex + 1]);
-    } else if (playerSettings.loop && playlist.length > 0) {
-      setCurrentVideo(playlist[0]);
-    }
-  }, [currentVideo, playlist, playerSettings.loop]);
+  const handlePlaySingleFile = useCallback(
+    async (file: File) => {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      await handleOpenLocalFiles(dt.files);
+    },
+    [handleOpenLocalFiles]
+  );
 
-  const handlePrevVideo = useCallback(() => {
-    if (!currentVideo || playlist.length === 0) return;
-    const currentIndex = playlist.findIndex((v) => v.id === currentVideo.id);
-    if (currentIndex > 0) {
-      setCurrentVideo(playlist[currentIndex - 1]);
-    }
-  }, [currentVideo, playlist]);
+  // Time & History tracking
+  const handleTimeUpdate = useCallback(
+    (time: number, duration: number) => {
+      setCurrentPlaybackTime(time);
+      setCurrentPlaybackDuration(duration);
+
+      if (currentVideo && duration > 0) {
+        const now = Date.now();
+        if (now - lastHistorySyncRef.current > 4000 || (duration > 0 && time / duration > 0.95)) {
+          lastHistorySyncRef.current = now;
+          browserAPI.indexedDB.saveHistoryItem({
+            id: currentVideo.id,
+            name: currentVideo.title,
+            sourceUrl: currentVideo.originalFile ? undefined : currentVideo.url,
+            isLocalFile: !!currentVideo.originalFile,
+            duration: duration,
+            position: time,
+            completed: duration > 0 && time / duration >= 0.95
+          });
+        }
+      }
+    },
+    [currentVideo]
+  );
 
   const handleRemoveFromPlaylist = useCallback((id: string) => {
     setPlaylist((prev) => prev.filter((item) => item.id !== id));
@@ -447,17 +544,14 @@ export default function App() {
           onToggleEqualizer={() => setIsEqualizerOpen(!isEqualizerOpen)}
           onToggleShortcuts={() => setIsShortcutsOpen(!isShortcutsOpen)}
           onShowToast={showToast}
-          onTimeUpdate={(t, d) => {
-            setCurrentPlaybackTime(t);
-            setCurrentPlaybackDuration(d);
-          }}
+          onTimeUpdate={handleTimeUpdate}
           onRegisterSeek={(seekFn) => {
             seekToVideoRef.current = seekFn;
           }}
         />
       )}
 
-      {/* Slide-in Playlist & Bookmarks Panel */}
+      {/* Slide-in Playlist, Bookmarks, History & Library Panel */}
       <PlaylistPanel
         isOpen={isPlaylistOpen}
         onClose={() => setIsPlaylistOpen(false)}
@@ -487,6 +581,8 @@ export default function App() {
         onDeleteBookmark={handleDeleteBookmark}
         onClearBookmarks={handleClearBookmarks}
         onShowToast={showToast}
+        onPlayUrl={handlePlayUrl}
+        onPlayFile={handlePlaySingleFile}
       />
 
       {/* Settings Modal */}

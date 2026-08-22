@@ -1,9 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ListVideo, Bookmark, X, Plus, Trash2, Sparkles, FolderPlus, Search } from 'lucide-react';
+import { ListVideo, Bookmark, X, Plus, Trash2, Sparkles, FolderPlus, Search, Clock, Folder } from 'lucide-react';
 import { PlaylistItem as PlaylistItemType, VideoBookmark } from '../../types';
 import { PlaylistItem } from './PlaylistItem';
 import { BookmarksList } from '../Bookmarks/BookmarksList';
+import { HistoryList } from './HistoryList';
+import { LibraryFolderView } from './LibraryFolderView';
 
 interface PlaylistPanelProps {
   isOpen: boolean;
@@ -13,7 +15,7 @@ interface PlaylistPanelProps {
   currentTime?: number;
   duration?: number;
   bookmarks?: VideoBookmark[];
-  initialTab?: 'playlist' | 'bookmarks';
+  initialTab?: 'playlist' | 'bookmarks' | 'history' | 'library';
   onSelectVideo: (video: PlaylistItemType) => void;
   onRemoveVideo: (id: string) => void;
   onRenameVideo: (id: string, newTitle: string) => void;
@@ -27,6 +29,8 @@ interface PlaylistPanelProps {
   onDeleteBookmark?: (id: string) => void;
   onClearBookmarks?: (videoId: string) => void;
   onShowToast?: (message: string) => void;
+  onPlayUrl?: (url: string, title: string) => void;
+  onPlayFile?: (file: File) => void;
 }
 
 export const PlaylistPanel: React.FC<PlaylistPanelProps> = ({
@@ -50,9 +54,11 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = ({
   onUpdateBookmark = () => {},
   onDeleteBookmark = () => {},
   onClearBookmarks = () => {},
-  onShowToast
+  onShowToast,
+  onPlayUrl,
+  onPlayFile
 }) => {
-  const [activeTab, setActiveTab] = useState<'playlist' | 'bookmarks'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'playlist' | 'bookmarks' | 'history' | 'library'>(initialTab);
   const [searchQuery, setSearchQuery] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -97,36 +103,66 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = ({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-            className="fixed top-0 right-0 bottom-0 w-full sm:w-96 bg-[#101114]/95 border-l border-white/10 shadow-2xl z-50 flex flex-col backdrop-blur-2xl"
+            className="fixed top-0 right-0 bottom-0 w-full sm:w-[420px] bg-[#101114]/95 border-l border-white/10 shadow-2xl z-50 flex flex-col backdrop-blur-2xl"
           >
             {/* Header & Tabs */}
-            <div className="p-3.5 border-b border-white/10 flex items-center justify-between bg-[#14161c]">
+            <div className="p-3 border-b border-white/10 flex items-center justify-between bg-[#14161c]">
               {/* Tab Selector */}
-              <div className="flex items-center p-1 rounded-xl bg-black/40 border border-white/10 gap-1">
+              <div className="flex items-center p-1 rounded-xl bg-black/40 border border-white/10 gap-0.5 overflow-x-auto max-w-[340px]">
                 <button
                   type="button"
                   onClick={() => setActiveTab('playlist')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
                     activeTab === 'playlist'
                       ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/20'
                       : 'text-gray-400 hover:text-white'
                   }`}
+                  title="Active Playlist Queue"
                 >
                   <ListVideo className="w-3.5 h-3.5" />
-                  <span>Playlist ({playlist.length})</span>
+                  <span>Queue ({playlist.length})</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setActiveTab('bookmarks')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
                     activeTab === 'bookmarks'
                       ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/20'
                       : 'text-gray-400 hover:text-white'
                   }`}
+                  title="Video Bookmarks"
                 >
                   <Bookmark className="w-3.5 h-3.5" />
-                  <span>Bookmarks ({currentVideoBookmarks.length})</span>
+                  <span>Marks ({currentVideoBookmarks.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('history')}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+                    activeTab === 'history'
+                      ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/20'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                  title="Recently Watched & Continue Watching"
+                >
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>History</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('library')}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+                    activeTab === 'library'
+                      ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/20'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                  title="Local Folder Media Library"
+                >
+                  <Folder className="w-3.5 h-3.5" />
+                  <span>Library</span>
                 </button>
               </div>
 
@@ -317,6 +353,31 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = ({
                 onDeleteBookmark={onDeleteBookmark}
                 onClearBookmarks={onClearBookmarks}
                 onSelectVideo={onSelectVideo}
+                onShowToast={onShowToast}
+              />
+            )}
+
+            {/* Tab 3: History View */}
+            {activeTab === 'history' && (
+              <HistoryList
+                onPlayUrl={(url, title) => {
+                  onPlayUrl?.(url, title);
+                  onClose();
+                }}
+                onRequireFileSelect={() => {
+                  fileInputRef.current?.click();
+                }}
+                onShowToast={onShowToast}
+              />
+            )}
+
+            {/* Tab 4: Library Folder View */}
+            {activeTab === 'library' && (
+              <LibraryFolderView
+                onPlayFile={(file) => {
+                  onPlayFile?.(file);
+                  onClose();
+                }}
                 onShowToast={onShowToast}
               />
             )}
